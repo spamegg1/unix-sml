@@ -1,0 +1,17 @@
+install=.
+smlbin=/usr/lib/smlnj/bin
+
+arg0=$0
+cmd=`basename $0`
+
+ARCH_N_OPSYS=`$smlbin/.arch-n-opsys`
+if [ "$?" != "0" ]; then
+    echo "$cmd: unable to determine architecture/operating system"
+    exit 1
+fi
+
+eval $ARCH_N_OPSYS
+suffix=$ARCH-$OPSYS
+
+exec $smlbin/.run/run.$ARCH-$OPSYS @SMLcommand=$arg0 \
+@SMLload=$install/${cmd}.$HEAP_SUFFIX "$@"

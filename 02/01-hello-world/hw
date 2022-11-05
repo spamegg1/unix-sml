@@ -1,0 +1,4 @@
+heap=`basename $0`
+install=.
+smlbin=/usr/lib/smlnj/bin
+exec $smlbin/.run-sml @SMLload=$install/${heap}.x86-linux "$@"
