@@ -13,5 +13,5 @@ struct
             OS.Process.success
     )
 
-    val _ = SMLofNJ.exportFn("echo", main)
+    val _: unit = SMLofNJ.exportFn("echo", main)
 end

@@ -18,17 +18,17 @@ The reference you need is the revised [Compilation Manager book](https://www.sml
 
 On page 30, I had to change the `hw.cm` file from:
 
-```sml
+```ocaml
 group is
-		hw.sml
+    hw.sml
 ```
 
 to:
 
-```sml
+```ocaml
 group is
-		hw.sml
-		$/basis.cm
+    hw.sml
+    $/basis.cm
 ```
 
 otherwise the library structures `SMLofNJ` and `OS.Process` would not be loaded.
@@ -77,10 +77,58 @@ hello world
 but I had to use:
 
 ```bash
-./hw
+> ./hw
 Hello world
 ```
 
 ### The `echo` program
 
 Similar changes as the `hw.sml` and `hw.cm` above.
+
+### Finite State Machine for counting words
+
+The `C` code has a semicolon missing on page 44, at:
+
+```c
+if (!c)
+{
+    count++ // semicolon missing here!
+    goto eod;
+}
+```
+
+The `sml` code has a typo too (or maybe the language changed since then?), on page 45, right at the start:
+
+```ocaml
+and word_count text = (* "and" should be "fun" instead *)
+```
+
+The same typo is repeated on page 46.
+
+### The `getopt` programs
+
+#### Mostly functional: `getopt1.sml`
+
+The `and` typos keep on happening so many times on page 51, I'm beginning to think they are not typos, but are meant to be placed inside a bigger wrapper function for mutual recursion? Anyway, I had to change them all to `fun`.
+
+There is a `polyEqual` warning here at `n = name`:
+
+```ocaml
+fun find_option opts name : (string option) option =
+    case List.find (fn (n, v) => n = name) opts of
+        NONE => NONE
+    |   SOME (n, v) => SOME v
+```
+
+Well we can't have that.
+
+It can be fixed by adding a type annotation to `n` like this: `fn (n: string, v) => ...`
+
+The book very stubbornly refuses to put any type annotations anywhere, so I'm going around and placing them myself. I think type annotations are especially useful in these complicated imperative programs, to understand what's happening. The book explains in long prose what the code does, but the code itself does not make it very clear to me.
+
+The `polyEqual` warning can also be avoided by providing a type annotation for `name` instead:
+
+```ocaml
+fun find_option(opts: Option list)(name: string): (string option) option =
+```
+
