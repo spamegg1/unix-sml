@@ -130,7 +130,7 @@ struct
     (
         toErr msg;
         toErr "\n";
-        toErr(usage());
+        (* toErr(usage()); *)
         toErr "\n";
         OS.Process.failure
     )

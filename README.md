@@ -18,14 +18,14 @@ The reference you need is the revised [Compilation Manager book](https://www.sml
 
 On page 30, I had to change the `hw.cm` file from:
 
-```ocaml
+```sml
 group is
     hw.sml
 ```
 
 to:
 
-```ocaml
+```sml
 group is
     hw.sml
     $/basis.cm
@@ -99,7 +99,7 @@ if (!c)
 
 The `sml` code has a typo too (or maybe the language changed since then?), on page 45, right at the start:
 
-```ocaml
+```sml
 and word_count text = (* "and" should be "fun" instead *)
 ```
 
@@ -113,7 +113,7 @@ The `and` typos keep on happening so many times on page 51, I'm beginning to thi
 
 There is a `polyEqual` warning here at `n = name`:
 
-```ocaml
+```sml
 fun find_option opts name : (string option) option =
     case List.find (fn (n, v) => n = name) opts of
         NONE => NONE
@@ -128,7 +128,7 @@ The book very stubbornly refuses to put any type annotations anywhere, so I'm go
 
 The `polyEqual` warning can also be avoided by providing a type annotation for `name` instead:
 
-```ocaml
+```sml
 fun find_option(opts: Option list)(name: string): (string option) option =
 ```
 
@@ -136,7 +136,7 @@ fun find_option(opts: Option list)(name: string): (string option) option =
 
 Another `polyEqual` warning on page 55:
 
-```ocaml
+```sml
 structure STRT_key =
 struct
     type hash_key = string
@@ -147,7 +147,7 @@ end
 
 Again let's provide type annotations to avoid it:
 
-```ocaml
+```sml
 structure STRT_key =
 struct
     type hash_key = string
@@ -186,7 +186,7 @@ I cannot figure out the return types of the functions in `getopt2.sml`, specific
 
 Again I have to change the `.cm` file. The book says:
 
-```ocaml
+```sml
 group is
 	getopt2.sml
 	/src/smlnj/current/lib/smlnj-lib.cm
@@ -194,7 +194,7 @@ group is
 
 but I have to do:
 
-```ocaml
+```sml
 group is
     getopt2.sml
 
@@ -260,7 +260,7 @@ Now we are using the `GetOpt` structure from the SML/NJ Utility Library: https:/
 
 Code on page 63 starts with a structure that's supposed to conform to the `OPTION` signature:
 
-```ocaml
+```sml
 structure Option: OPTION = 
 struct
     structure G = GetOpt (* alias *)
@@ -284,7 +284,7 @@ getopt3.sml:1.2-23.4 Error: unmatched value specification: valOf
 
 As far as I can tell, this is a straight-up error in the book. So I had to remove the `OPTION` declaration there:
 
-```ocaml
+```sml
 structure Option = (* removed : OPTION here *)
 struct
     ...
@@ -292,7 +292,7 @@ struct
 
 The code on page 64 starts by opening a list with `[` but the list is never closed with `]`:
 
-```ocaml
+```sml
 val options: (Option G.opt_descr) list = [
     {
     	short = "v", long = ["verbose"],
@@ -309,7 +309,7 @@ val options: (Option G.opt_descr) list = [
 
 Another typo? The author says: *"Here is my code for **part** of the option description list."* So I think we're supposed to write the rest? So I have to write entries for `height`, `help`. I think.
 
-```ocaml
+```sml
 val options: (Option G.opt_descr) list = [
     {
         short = "v", long = ["verbose"],
@@ -338,7 +338,7 @@ Also from the indentation used in the book it's not clear if all of these are st
 
 On page 66 in the `fun getWidth()` function, there is a closed parenthesis at the end, but it's not opened anywhere. The function body has a `let` block, so it should end with `end` but it ends with `)` instead:
 
-```ocaml
+```sml
 fun getWidth(): string option =
     let
         val opt_width = List.find (fn Width _ => true | _ => false) (!opt_tbl)
@@ -352,7 +352,7 @@ fun getWidth(): string option =
 
 On page 67 the dereference operator `!` is explained. Here is an example from the REPL:
 
-```ocaml
+```sml
 val z: int list ref = ref [1, 2, 3];
 val z = ref [1,2,3] : int list ref
 z := [4]; (* mutation! *)
@@ -373,12 +373,12 @@ Normally `parse_cmdline` was inside `structure Main` but `parseCmdLine` mutates 
 
 I am going to make a change, and move `fun show_stuff()` outside of `fun main`. This requires passing the `files, width` and `height` as parameters to `show_stuff()`:
 
-```ocaml
+```sml
 ```
 
 Ugh... there are a lot more unexplained things. For example `Option.getHeight` is missing. The author never wrote it. We'll just copy/paste `getWidth` and slightly change it I guess:
 
-```ocaml
+```sml
 fun getHeight(): string option =
     let
         val opt_height = List.find (fn Height _ => true | _ => false) (!opt_tbl)
@@ -404,7 +404,7 @@ Usage: getopt
 
 I think `Option.usage()` is supposed to return this as a `string` to be passed to `Option.toErr` as the `msg` parameter. OK!
 
-```ocaml
+```sml
 fun usage(): string =
     concat[
         "Usage: getOpt\n",
@@ -417,7 +417,7 @@ fun usage(): string =
 
 I ended up putting this inside `structure Main` instead. Oh and I also changed the name of the structure from `Option` to `Common` like before (see further below for the reason). The overall result ended up quite different than the book. Well, there is no way for me to know that actually! Because a lot of the code is missing! So I think it ended up quite different than *what was probably intended:*
 
-```ocaml
+```sml
 structure Common =
 struct
     structure G = GetOpt (* alias *)
