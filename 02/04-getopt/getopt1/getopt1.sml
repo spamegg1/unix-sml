@@ -72,7 +72,8 @@ fun main(arg0: string, argv: string list): OS.Process.status = let
             print "some helpful blurb\n"
         else
             show_stuff();
-            OS.Process.success
+
+        OS.Process.success
     end
     handle Usage msg =>
     (
