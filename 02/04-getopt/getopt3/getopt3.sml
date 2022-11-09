@@ -91,14 +91,7 @@ structure Main =
 struct
     open Common
 
-    fun usage(): string =
-        concat[
-            "Usage: getOpt\n",
-            "-v -verbose\tSelect verbose output\n",
-            "-width=width\tThe width in pixels\n",
-            "-height=height\tThe height in pixels\n",
-            "-h -help\tShow this message.\n"
-        ]
+    fun usage () = print (G.usageInfo{header = "usage:", options = options})
 
     fun show_stuff(files: string list, width: string, height: string): unit =
     (
@@ -121,7 +114,7 @@ struct
         val height = require_option getHeight "height"
     in
         if hasHelp() then
-            print(usage())
+            usage()
         else
             show_stuff(files, width, height);
             OS.Process.success
@@ -131,6 +124,7 @@ struct
         toErr msg;
         toErr "\n";
         (* toErr(usage()); *)
+        usage();
         toErr "\n";
         OS.Process.failure
     )

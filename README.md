@@ -182,14 +182,14 @@ immediately to save the compiler and the reader having to figure it out." :laugh
 
 #### `getopt` with a hash table: `getopt2.sml`
 
-I cannot figure out the return types of the functions in `getopt2.sml`, specifically the helpers inside `parse_cmdline`. I'll have to come back to that.
+I cannot figure out the return types of the functions in `getopt2.sml`, specifically the helpers inside `parse_cmdline`. I'll have to come back to that. (Turns out it's just `string list`.)
 
 Again I have to change the `.cm` file. The book says:
 
 ```sml
 group is
-	getopt2.sml
-	/src/smlnj/current/lib/smlnj-lib.cm
+    getopt2.sml
+    /src/smlnj/current/lib/smlnj-lib.cm
 ```
 
 but I have to do:
@@ -374,6 +374,19 @@ Normally `parse_cmdline` was inside `structure Main` but `parseCmdLine` mutates 
 I am going to make a change, and move `fun show_stuff()` outside of `fun main`. This requires passing the `files, width` and `height` as parameters to `show_stuff()`:
 
 ```sml
+fun show_stuff(files: string list, width: string, height: string): unit =
+(
+    print "The files are";
+    app (fn f => (print " "; print f)) files;
+    print ".\n";
+
+    if hasVerbose() then
+        print(concat[
+            "The width is ", width, ".\n",
+            "The height is ", height, ".\n"
+        ])
+    else ()
+)
 ```
 
 Ugh... there are a lot more unexplained things. For example `Option.getHeight` is missing. The author never wrote it. We'll just copy/paste `getWidth` and slightly change it I guess:
@@ -402,18 +415,26 @@ Usage: getopt
   -h -help			Show this message.
 ```
 
-I think `Option.usage()` is supposed to return this as a `string` to be passed to `Option.toErr` as the `msg` parameter. OK!
+I think `Option.usage()` is supposed to return this as a `string` to be passed to `Option.toErr` as the `msg` parameter. OK! First approach:
 
 ```sml
 fun usage(): string =
     concat[
         "Usage: getOpt\n",
-        "-v -verbose\t\tSelect verbose output\n",
-        "-width=width\t\tThe width in pixels\n",
-        "-height=height\t\tThe height in pixels\n",
-        "-h -help\t\tShow this message.\n"
+        "-v -verbose\tSelect verbose output\n",
+        "-width=width\tThe width in pixels\n",
+        "-height=height\tThe height in pixels\n",
+        "-h -help\tShow this message.\n"
     ]
 ```
+
+The [GetOpt manpage](https://www.smlnj.org/doc/smlnj-lib/Util/str-GetOpt.html) has a really nice example with a much better approach to this `usage` by using the built-in `usageInfo` function; it's wrapped in a `usage()` function that actually *prints* directly; and it actually uses the text messages we put inside the `options` list, instead of my manual typing above. That's much better: just copy-paste it from the manpage, and slightly change it.
+
+```sml
+fun usage () = print (G.usageInfo{header = "usage:", options = options})
+```
+
+See, if the book explained all this, it would have been nice. Oh well. At least I'm having *a little bit* of fun and feeling smart.
 
 I ended up putting this inside `structure Main` instead. Oh and I also changed the name of the structure from `Option` to `Common` like before (see further below for the reason). The overall result ended up quite different than the book. Well, there is no way for me to know that actually! Because a lot of the code is missing! So I think it ended up quite different than *what was probably intended:*
 
@@ -510,15 +531,8 @@ end
 structure Main =
 struct
     open Common
-
-    fun usage(): string =
-        concat[
-            "Usage: getOpt\n",
-            "-v -verbose\t\tSelect verbose output\n",
-            "-width=width\t\tThe width in pixels\n",
-            "-height=height\t\tThe height in pixels\n",
-            "-h -help\t\tShow this message.\n"
-        ]
+    
+    fun usage () = print (G.usageInfo{header = "usage:", options = options})
 
     fun show_stuff(files: string list, width: string, height: string): unit =
     (
@@ -541,7 +555,7 @@ struct
         val height = require_option getHeight "height"
     in
         if hasHelp() then
-            print(usage())
+            usage()
         else
             show_stuff(files, width, height);
             OS.Process.success
@@ -550,7 +564,7 @@ struct
     (
         toErr msg;
         toErr "\n";
-        toErr(usage());
+        usage();
         toErr "\n";
         OS.Process.failure
     )
@@ -581,18 +595,86 @@ Yep, for some reason he keeps using names that clash with SML/NJ library, such a
 Finally it's working, I can't believe it:
 
 ```bash
-./getopt3 -v --width=1 --height=1 file1 file2
-The files are file1 file2.
+./getopt3 --help
+The option 'width' is missing.
+usage:
+  -v  --verbose        Select verbose output
+      --width=width    The width in pixels
+      --height=height  The height in pixels
+  -h  --help           Some helpful blurb
+./getopt3 -v --width=1 --height=1 file1 file2 file3
+The files are file1 file2 file3.
 The width is 1.
 The height is 1.
-./getopt3 -v -h --width=1 --height=1 file1 file2
-Usage: getOpt
--v -verbose     Select verbose output
--width=width    The width in pixels
--height=height  The height in pixels
--h -help        Show this message.
-./getopt3 -v -h --width=1 file1 file2
-The option 'height' is missing.
 ```
 
+Overall opinion of the `getopt` section: the `GetOpt` library seems nice, would be nicer to stick to it even closer; and I don't get the point of the mutable reference that holds the options in a list. Other than the side effects like printing, imperative programming here seems unnecessary. So I think it's done just for the sake of demonstration. In the book's defense, we first did it with minimal imperativity / library usage in `getopt1.sml` so that's fair.
+
 ## Chapter 3: The Basis Library
+
+### Preliminaries
+
+#### The value restriction
+
+Interesting: the book says
+
+> The value polymorphism restriction is not something you will likely encounter. For the purposes of this book it mainly requires you to ensure that imperative variables using the `ref` type are restricted to contain a specific declared type.
+
+Why is this interesting? I took [Programming Languages Part A](https://www.coursera.org/learn/programming-languages) by Dan Grossman from U. of Washington, on Coursera, to learn SML. This was mentioned mostly as an optional thing: "value restriction":
+
+```sml
+sml
+Standard ML of New Jersey v110.79 [built: Sat Oct 26 12:27:04 2019]
+val x = ref [];
+stdIn:1.6-1.16 Warning: type vars not generalized because of
+   value restriction are instantiated to dummy types (X1,X2,...)
+val x = ref [] : ?.X1 list ref
+- 
+```
+
+Here's what the course said:
+
+> As described so far in this section, the ML type system is unsound, meaning that it would accept programs that when run could have values of the wrong types, such as putting an int where we expect a string. The  problem results from a combination of polymorphic types and mutable references, and the fix is a special  restriction to the type system called the value restriction. This is an example program that demonstrates the problem:
+```sml
+val r = ref NONE
+(* ’a option ref *)
+val _ = r := SOME "hi" (* instantiate ’a with string *)
+val i = 1 + valOf(!r) (* instantiate ’a with int *)
+```
+> Straightforward use of the rules for type checking/inference would accept this program even though we should not – we end up trying to add `1` to `"hi"`. Yet everything seems to type-check given the types for the functions/operators `ref (’a -> ’a ref)`, `:= (’a ref * ’a -> unit)`, and `! (’a ref -> ’a)`. To restore soundness, we need a stricter type system that does not let this program type-check. The choice ML made is to prevent the first line from having a polymorphic type. Therefore, the second and third lines will not type-check because they will not be able to instantiate an `’a` with `string` or `int`.
+
+Why is this called *value* restriction? Some `fun`s that can be written as `val`s get ruled out by this. The course said:
+
+> Once you have learned currying and partial application, you might try to use it to create a *polymorphic
+> function*. Unfortunately, certain uses, such as these, do not work in ML:
+
+```sml
+val mapSome = List.map SOME (* not OK *)
+```
+
+> Given what we have learned so far, there is no reason why this should not work, especially since all these
+> functions do work:
+
+```sml
+fun mapSome xs = List.map SOME xs       (* OK *)
+val mapSome = fn xs => List.map SOME xs (* OK *)
+```
+
+These ruled-out "function-values" are called *polymorphic functions types*, and interestingly, [they have been only recently added to Scala 3](https://docs.scala-lang.org/scala3/reference/new-types/polymorphic-function-types.html):
+
+> A polymorphic function type is a function type which accepts type parameters. For example:
+
+```scala
+// A polymorphic method:
+def foo[A](xs: List[A]): List[A] = xs.reverse
+
+// A polymorphic function value:
+val bar: [A] => List[A] => List[A]
+//       ^^^^^^^^^^^^^^^^^^^^^^^^^
+//       a polymorphic function type
+       = [A] => (xs: List[A]) => foo[A](xs)
+```
+
+(Does this mean Scala's type system is unsound? [Probably not, at least in theory.](https://www.semanticscholar.org/paper/Type-soundness-for-dependent-object-types-(DOT)-Rompf-Amin/bcb109f4b7ba02a4172c012a39a578135d612cc8) Implementation is a different matter though.) Anyway... interesting things happening in the functional world over the last 20 years huh?
+
+But now that weird little side thing that was mentioned in the course becomes clearer, because that course used no imperative programming, and now we're doing a lot of imperative programming in the book. ***We have to always instantiate `ref` types to some concrete type.***
