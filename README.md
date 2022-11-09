@@ -643,7 +643,7 @@ val i = 1 + valOf(!r) (* instantiate ’a with int *)
 ```
 > Straightforward use of the rules for type checking/inference would accept this program even though we should not – we end up trying to add `1` to `"hi"`. Yet everything seems to type-check given the types for the functions/operators `ref (’a -> ’a ref)`, `:= (’a ref * ’a -> unit)`, and `! (’a ref -> ’a)`. To restore soundness, we need a stricter type system that does not let this program type-check. The choice ML made is to prevent the first line from having a polymorphic type. Therefore, the second and third lines will not type-check because they will not be able to instantiate an `’a` with `string` or `int`.
 
-Why is this called *value* restriction? Some `fun`s that can be written as `val`s get ruled out by this. The course said:
+Why is this called *value* restriction? Because it prevents values from being polymorphic. As a result, some `fun`s that can be written as `val`s get ruled out by this. The course said:
 
 > Once you have learned currying and partial application, you might try to use it to create a *polymorphic
 > function*. Unfortunately, certain uses, such as these, do not work in ML:
@@ -675,6 +675,104 @@ val bar: [A] => List[A] => List[A]
        = [A] => (xs: List[A]) => foo[A](xs)
 ```
 
-(Does this mean Scala's type system is unsound? [Probably not, at least in theory.](https://www.semanticscholar.org/paper/Type-soundness-for-dependent-object-types-(DOT)-Rompf-Amin/bcb109f4b7ba02a4172c012a39a578135d612cc8) Implementation is a different matter though.) Anyway... interesting things happening in the functional world over the last 20 years huh?
+Does this mean Scala's type system is unsound now because of this? ([Probably not, at least in theory.](https://www.semanticscholar.org/paper/Type-soundness-for-dependent-object-types-(DOT)-Rompf-Amin/bcb109f4b7ba02a4172c012a39a578135d612cc8) Implementation is a different matter though.) The unsoundness comes when polymorphic values mix with mutation (`var` in Scala). 
+
+However, Scala requires these polymorphic types to be *function types*; trying to replicate the above `sml` issue does not work. Here I'm trying to create a reference (`var`) to an optional value with a type parameter in it, and setting it to `None` initially (so it leaves the possibility of being `Option[String]` as well as `Option[Int]`):
+
+```scala
+scala> var spam: [T] => Option[T] = [T] => None
+-- Error: ------------------------------------------------------------------------------------------------------------
+1 |var spam: [T] => Option[T] = [T] => None
+  |              ^
+  |              Implementation restriction: polymorphic function types must have a value parameter
+-- Error: ------------------------------------------------------------------------------------------------------------
+1 |var spam: [T] => Option[T] = [T] => None
+  |                                 ^
+  |                           Implementation restriction: polymorphic function literals must have a value parameter
+```
+
+Yep, so that's ruled out already. Even if we *could* do this, we'd still have to instantiate the type parameter `T` with `Int` and `String` separately, so the situation where we're trying to add `1` to `"hi"` would not type-check. Moreover, Scala does not generalize type variables like `sml` does, instead it infers them to the "bottom type" `Nothing`:
+
+```sml
+ ➜ sml
+Standard ML of New Jersey v110.79 [built: Sat Oct 26 12:27:04 2019]
+val x = [];
+val x = [] : 'a list (* left generalized as long as it's not a ref *)
+```
+
+```scala
+scala> val y = List()
+val y: List[Nothing] = List()
+```
+
+Even if we made `y` into a `var` and then tried to reassign an integer list to it, Scala won't allow it:
+
+```scala
+scala> var y = List()
+var y: List[Nothing] = List()
+scala> y = List(1)
+-- [E007] Type Mismatch Error: ---------------------------------------------------------------------------------------
+1 |y = List(1)
+  |         ^
+  |         Found:    (1 : Int)
+  |         Required: Nothing
+  |
+  | longer explanation available when compiling with `-explain`
+1 error found
+```
+
+The `sml` equivalent of this happens only for the `ref` types:
+
+```sml
+val y = ref [];
+stdIn:2.5-2.15 Warning: type vars not generalized because of
+   value restriction are instantiated to dummy types (X1,X2,...)
+val y = ref [] : ?.X1 list ref
+y := [1];
+stdIn:3.1-3.9 Error: operator and operand don't agree [overload conflict]
+  operator domain: ?.X1 list ref * ?.X1 list
+  operand:         ?.X1 list ref * [int ty] list
+  in expression:
+    y := 1 :: nil
+```
+
+Scala requires concrete type variables to be provided for values. We cannot leave them generalized (because Scala has subtyping which `sml` does not, so Scala has to worry about [variance](https://en.wikipedia.org/wiki/Covariance_and_contravariance_(computer_science))):
+
+```scala
+scala> val z = List[T]()
+-- [E006] Not Found Error: -------------------------------------------------------------------------------------------
+1 |val z = List[T]()
+  |             ^
+  |             Not found: type T
+  |
+  | longer explanation available when compiling with `-explain`
+1 error found
+```
+
+This is a general rule not limited to references (`var`). So I tried my best to break the Scala type system, but I cannot find any problem.
+
+Anyway... interesting things happening in the functional world over the last 20 years huh?
 
 But now that weird little side thing that was mentioned in the course becomes clearer, because that course used no imperative programming, and now we're doing a lot of imperative programming in the book. ***We have to always instantiate `ref` types to some concrete type.***
+
+### General
+
+### Option
+
+### Bool
+
+### Text
+
+#### Byte
+
+### Integer
+
+### Real
+
+### List
+
+### Array and Vector
+
+### Portable IO API
+
+### POSIX API
