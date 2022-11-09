@@ -578,15 +578,21 @@ Compilation failed.
 
 Yep, for some reason he keeps using names that clash with SML/NJ library, such as `Option`. I'm just changing it to `Common` instead.
 
-There are some issues that need debugging:
+Finally it's working, I can't believe it:
 
 ```bash
-./getopt3 -width=1 -height=1 -v
-unrecognized option `-w'unrecognized option `-e'The option 'width' is missing.
+./getopt3 -v --width=1 --height=1 file1 file2
+The files are file1 file2.
+The width is 1.
+The height is 1.
+./getopt3 -v -h --width=1 --height=1 file1 file2
 Usage: getOpt
 -v -verbose     Select verbose output
 -width=width    The width in pixels
 -height=height  The height in pixels
 -h -help        Show this message.
+./getopt3 -v -h --width=1 file1 file2
+The option 'height' is missing.
 ```
 
+## Chapter 3: The Basis Library
