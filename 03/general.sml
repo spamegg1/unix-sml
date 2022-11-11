@@ -1,16 +1,17 @@
 val success = OS.Process.success
 val failure = OS.Process.failure
+val status = OS.Process.status
 
 exception Fatal
 exception InternalError of string
 
 fun process(args: string list): unit = () (* dummy, for demonstration *)
-fun toErr  ( msg: string     ): unit = TextIO.output(TextIO.stdErr, msg)
-fun f() = () (* dummy *)
+fun toErr(msg: string): unit = TextIO.output(TextIO.stdErr, msg)
+fun f(): unit = () (* dummy *)
 
-fun run(args: string list): OS.Process.status =
+fun run(args: string list): status =
     let
-        val _ = 0 (* this is just dummy *)
+        val _: int = 0 (* this is just dummy *)
     in
         process args;
         print "starting f\n";

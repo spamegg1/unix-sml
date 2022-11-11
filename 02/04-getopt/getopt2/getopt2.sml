@@ -40,9 +40,9 @@ struct
     type OptionTable = Option STRT.hash_table
 
     val option_tbl: OptionTable = STRT.mkTable(20, NotFound)
-    fun addOption arg = STRT.insert option_tbl arg
-    fun hasOption name = STRT.find option_tbl name <> NONE
-    fun getOption name = STRT.find option_tbl name
+    fun addOption(arg: string) = STRT.insert option_tbl arg
+    fun hasOption(name: string) = STRT.find option_tbl name <> NONE
+    fun getOption(name: string) = STRT.find option_tbl name
 
 end
 
@@ -90,7 +90,7 @@ struct
 
 
     fun main(arg0: string, argv: string list): OS.Process.status = let
-        val files = parse_cmdline argv
+        val files : string list = parse_cmdline argv
         val width : string = require_option "width" true
         val height: string = require_option "height" true
 
@@ -124,5 +124,5 @@ struct
             OS.Process.failure
         )
 
-    val _ = SMLofNJ.exportFn("getopt2", main)
+    val _: unit = SMLofNJ.exportFn("getopt2", main)
 end

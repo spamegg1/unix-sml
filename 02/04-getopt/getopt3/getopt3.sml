@@ -91,7 +91,7 @@ structure Main =
 struct
     open Common
 
-    fun usage () = print (G.usageInfo{header = "usage:", options = options})
+    fun usage(): unit = print(G.usageInfo{header = "usage:", options = options})
 
     fun show_stuff(files: string list, width: string, height: string): unit =
     (
@@ -109,9 +109,9 @@ struct
 
     fun main(arg0: string, argv: string list): OS.Process.status =
     let
-        val files = parseCmdLine argv
-        val width = require_option getWidth "width"
-        val height = require_option getHeight "height"
+        val files : string list = parseCmdLine argv
+        val width : string = require_option getWidth "width"
+        val height: string = require_option getHeight "height"
     in
         if hasHelp() then
             usage()
@@ -129,5 +129,5 @@ struct
         OS.Process.failure
     )
 
-    val _ = SMLofNJ.exportFn("getopt3", main)
+    val _: unit = SMLofNJ.exportFn("getopt3", main)
 end

@@ -1,13 +1,13 @@
 fun word_count(text: string) =
     let
-        fun out_state([]: char list)(count: int) = count
+        fun out_state([]: char list)(count: int): int = count
         |   out_state (c :: rest) count =
             if Char.isSpace c then
                 out_state rest count
             else
                 in_state rest count
 
-    and in_state([]: char list)(count: int) = count + 1
+    and in_state([]: char list)(count: int): int = count + 1
     |   in_state (c :: rest) count =
         if Char.isSpace c then
             out_state rest (count + 1)
@@ -17,11 +17,11 @@ fun word_count(text: string) =
         out_state (explode text) 0
     end
 
-fun word_count2(text: string) =
+fun word_count2(text: string): int =
     let
         datatype State = In | Out
 
-        fun loop Out [] count = count
+        fun loop(Out: State)([]: char list)(count: int): int = count
         |   loop Out (c :: rest) count =
             if Char.isSpace c then
                 loop Out rest count
@@ -43,7 +43,7 @@ fun word_count3(text: string): int = length(String.tokens Char.isSpace text)
 (* run it with: main("", []) *)
 fun main(arg0: string, argv: string list): OS.Process.status =
     let
-        val cnt = word_count "the quick brown fox";
+        val cnt: int = word_count "the quick brown fox";
     in
         print(concat["Count = ", Int.toString cnt, "\n"]);
         OS.Process.success

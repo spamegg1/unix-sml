@@ -702,7 +702,7 @@ val x = [] : 'a list (* left generalized as long as it's not a ref *)
 
 ```scala
 scala> val y = List()
-val y: List[Nothing] = List()
+val y: List[Nothing] = List() // not generalized, inferred to Nothing instead
 ```
 
 Even if we made `y` into a `var` and then tried to reassign an integer list to it, Scala won't allow it:
