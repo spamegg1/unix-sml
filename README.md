@@ -2,9 +2,35 @@
 
 ## Getting Standard ML
 
-On Debian/Ubuntu and derivatives: `sudo apt install smlnj`
+```bash
+sudo apt install smlnj  # On Debian/Ubuntu and derivatives
+sudo dnf install polyml # No SML/NJ in Fedora repos, don't bother installing from source
+```
 
-This will install the language in `/usr/lib/smlnj`.
+On Debian/Ubuntu, this will install the language in `/usr/lib/smlnj`.
+
+The REPL is quite difficult to use because it does not support cycling through the history of commands with Up/Down arrow keys, or navigating left/right on the line of input with Left/Right arrow keys. To fix these issues, you should install `rlwrap`:
+
+```bash
+sudo apt install rlwrap # Debian/Ubuntu
+sudo dnf install rlwrap # Fedora
+brew install rlwrap # MacOS users can get it from Homebrew: https://brew.sh
+```
+
+Now you should make an alias in your `~/.bash_aliases` file:
+
+```bash
+alias sml='rlwrap sml'
+```
+
+By the way this applies to other ML implementations too, such as Poly/ML (which uses the `poly` command) or OCaml (which uses the command `ocaml`). Both of these are available on Debian/Ubuntu if you prefer:
+
+```bash
+sudo apt install polyml
+sudo apt install ocaml
+```
+
+I have all 3 installed but I'll be sticking to SML/NJ. Poly/ML should be 100% compatible with what we're doing (Fedora users can use that, because Fedora repositories don't have SML/NJ), and OCaml is an entirely different language at this point. It would be an interesting exercise to do this book in OCaml.
 
 ## Changes since 2001
 
@@ -573,6 +599,8 @@ struct
 end
 ```
 
+(One thing to note is that, `TextIO.output` is actually "inherited" from  `StreamIO` structure.)
+
 There are no more explanations on what to do; so I have to create the `getopt3.cm` file and the `getopt3` launch script myself. Copy-pasting the `.cm` file (change `getopt2.sml` to `getopt3.sml`) and the script for`getopt2` works. Don't forget to `chmod +x getopt3` the script.
 
 Remember we will be using the neat convenient shortcut:
@@ -590,7 +618,7 @@ Ah here we go... the author's weird module naming bites us in the ass:
 Compilation failed.
 ```
 
-Yep, for some reason he keeps using names that clash with SML/NJ library, such as `Option`. I'm just changing it to `Common` instead.
+Yep, for some reason he keeps using names that clash with SML/NJ library, such as `Option`. I'm changing it to `Common` instead.
 
 Finally it's working, I can't believe it:
 
@@ -757,22 +785,336 @@ But now that weird little side thing that was mentioned in the course becomes cl
 
 ### General
 
+Some stuff from the [General structure](https://smlfamily.github.io/Basis/general.html) mentioned here. `exnName` and `exnMessage`, `!` for dereferencing and `:=` for assignment, `o` for function composition, and the `before` function, which I didn't know about!
+
+The `Fatal` and `InternalError` exceptions the author mentions are not found anywhere in the `sml` library. So I manually defined them in the big code example:
+
+```sml
+exception Fatal
+exception InternalError of string
+```
+
+I had to supply a lot of other stuff too:
+
+```sml
+fun process(args: string list): unit = () (* dummy, for demonstration *)
+fun toErr(msg: string): unit = TextIO.output(TextIO.stdErr, msg)
+fun f(): unit = () (* dummy *)
+```
+
+Just keep in mind, to make the code type-check and compile, you have to provide missing stuff yourself.
+
 ### Option
+
+Not much here: `valOf, isSome`. There is one interesting thing: the mention of *equality types.*
+
+We cannot compare an optional function value to, say, `NONE` by using plain equality `=`:
+
+```sml
+- val z = SOME (fn x => x);
+val z = SOME fn : ('a -> 'a) option
+- z = NONE;
+stdIn:25.1-25.9 Error: operator and operand
+don’t agree [equality type required]
+    operator domain: ''Z * ''Z
+    operand:         ('Y -> 'Y) option * 'X option
+in expression:
+z = NONE
+- Option.isSome z;
+val it = true : bool
+```
+
+Notice `equality type required`. What's an equality type? It's similar to how you can use typeclass derivation like `deriving Eq` in Haskell or `derives CanEqual` in Scala 3. In `sml` we do this by using double single-quotes before a type annotation like `''a`.  It still doesn't help us with the above problem though. We could define instead:
+
+```sml
+val z: (''a -> ''a) option = SOME(fn x => x);
+```
+
+but `NONE` itself is `'X option`, which is not an equality type; so we cannot change that!
 
 ### Bool
 
+Not much here, just `Bool.toString` and `Bool.fromString`.
+
 ### Text
 
-#### Byte
+Lots of stuff here. Many structures: [`String`](https://smlfamily.github.io/Basis/string.html), [`Char`](https://smlfamily.github.io/Basis/char.html) [`Text`](https://smlfamily.github.io/Basis/text.html), [`Substring`](https://smlfamily.github.io/Basis/substring.html) [`StringCvt`](https://smlfamily.github.io/Basis/string-cvt.html) and so on. Interesting bits about performance. It seems that `Substring.all` that is mentioned in the book has been renamed to `Substring.full` in my version of `sml`.
+
+Now we get to the good hard stuff: streams. We'll be processing text data in the form of streams, and use transformer functions (a bit reminiscent of monad transformers from Haskell). Character streams can come from a `string` via `StringCvt.scanString` or from a file via `TextIO.scanStream`. The code is quite complicated.
+
+The author uses a multi-line string literal that I haven't seen before in `sml`: 
+
+```sml
+val text = "\
+            \ 123 true 23.4        \n\
+            \ -1 false -1.3e3      \n\
+            \"
+```
+
+and the VS Code plug-in cannot do syntax coloring correctly. The rest of the code that comes after this string gets recognized as a string (probably a bug in the plug-in, with the regular expressions that define its comments?). But the code type-checks fine. You can run it, to see that it's correctly reporting the `int`, the `bool` and the `real` inside the text:
+
+```sml
+main("", []);
+123 true 23.4
+val it = 0 : OS.Process.status
+- 
+```
+
+I reported it to the [extension developer](https://github.com/vrjuliao/sml-vscode-extension/issues/18).
+
+#### Bytes
+
+Not much here. [Some conversion functions.](https://smlfamily.github.io/Basis/byte.html) Will be used for reading from, and writing to, TCP/IP sockets.
 
 ### Integer
 
+Interesting bit about `sml`'s garbage collector and the weird 31-bit integers. LSB (least significant bit) is used by the GB to tell whether it's a pointer or not. So `int` is actually 31-bit. Some useful conversion functions `toInt, fromInt, toString, fromString, toLarge, fromLarge` etc. 
+
+And typical arithmetical operators. Note that `sml` does not auto-convert `int`s to `float`s when you are doing division. The `/` is reserved for `real`s whereas for `int`s you have to use the `div` operator. I'm familiar with this from Haskell. Implicit conversions can break the type-system, so it's a reasonable trade-off and only a small inconvenience.
+
+```sml
+- 5/2;
+stdIn:11.1-11.4 Error: operator and operand don't agree [overload conflict]
+  operator domain: real * real
+  operand:         [int ty] * [int ty]
+  in expression:
+    5 / 2
+- 5 div 2;
+val it = 2 : int
+- 
+```
+
+Hey, we can use hexadecimal with `x`in `sml`! Who knew? Also `word` and hexadecimal `word` with the `w`:
+
+```sml
+- val i: int = 0x123;
+val i = 291 : int
+- val j: word = 0w12345;
+val j = 0wx3039 : word
+- val k: word = 0wx12345;
+val k = 0wx12345 : word
+- 
+```
+
+VS Code plug-in again fails to correctly syntax-color these. [Reported!](https://github.com/vrjuliao/sml-vscode-extension/issues/17)
+
 ### Real
+
+In `sml` the `real` type is not an equality type! So we cannot use the usual `=` or `<>` for comparing `real`s. The documentation has [some explanation about this](https://smlfamily.github.io/Basis/real.html#Real:STR:SPEC):
+
+> Deciding if `real` should be an equality type, and if so,  what should equality mean, was also problematic. IEEE specifies that the sign of zeros be ignored in comparisons, and that equality evaluate to  false if either argument is `NaN`. These constraints are disturbing to the SML programmer. The former implies that `0 = ~0` is true while `r/0 = r/~0` is false. The latter implies such anomalies as `r = r` is false, or that, for a ref cell `rr`, we could have `rr = rr` but not have `!rr = !rr`. We accepted the unsigned comparison of zeros, but felt that the  reflexive property of equality, structural equality, and the equivalence of `<>` and `not o =` ought to be preserved. Additional complications led to the decision to not have `real` be an equality type.
+
+The good news is that we can use `Real.==` and `Real.!=`; moreover the top-level `<, >, <=, >=` are still available.
 
 ### List
 
+Just normal list stuff. The `@` operator concatenates two lists, but it has to copy the first argument, so it's not efficient:
+
+```sml
+- [1,2] @ [3,4];
+val it = [1,2,3,4] : int list
+```
+
+The `cons` operator `::` is efficient (but it only adds 1 element to the left of the list). There are some useful functions that the book recommends:
+
+```sml
+val revAppend : 'a list * 'a list -> 'a list
+val app : ('a -> unit) -> 'a list -> unit
+val tabulate : int * (int -> 'a) -> 'a list
+```
+
+The [`ListPair` structure](https://smlfamily.github.io/Basis/list-pair.html) is super useful, I used it a lot in my [pattern matching exercise in Programming Languages Part A](https://github.com/spamegg1/reviews/blob/master/courses/ProgLangA/week4/hw3/).
+
 ### Array and Vector
+
+Not much to say here. There are specialized types such as `CharArray` and `CharVector`.
 
 ### Portable IO API
 
+This is the most interesting part. Lots of `IO` interfaces here: `PRIM_IO, OS_PRIM_IO, TEXT_IO, BIN_IO, TEST_STREAM_IO, IMPERATIVE_IO, STREAM_IO` with various relationships between them. And these are *just the signatures.* There are way more *structures:* `BinPrimIO, TextPrimIO, PosixBinPrimIO, Posix.IO, PosixText.IO, PosixTextPrimIO,...` The list goes on.
+
+The documentation calls `StreamIO` a FUNCTOR. Now we're talking. A functor is not a monad but close enough.
+
+The book says: 
+
+> Input streams are handled in a lazy functional manner. This means that streams are read from only upon demand (as you would expect) and the read returns a stream updated at a new position. So you can read from the same stream value multiple times and it always returns the same data from the same position. Output streams are imperative. Each write will append new data to the output stream.
+
+I bet this will bite us in the ass somewhere down the line, requiring a workaround. Otherwise very useful.
+
+As it became a theme already, the code examples have a lot of missing stuff, undefined functions which lead to `unbound variable or constructor` errors in `sml`, so they have to be supplied by hand.
+
+On page 87 there is code with a `let` block that's empty (also `count` is missing):
+
+```sml
+fun main(arg0: string, argv: string list): OS.Process.status =
+let
+in
+    case argv of
+        [] => count TextIO.stdIn ""
+    |   (file :: _) =>
+        let
+            val strm = TextIO.openIn file
+        in
+            (count strm file) handle x => (TextIO.closeIn strm; raise x);
+            TextIO.closeIn strm
+            end;
+    OS.Process.success
+end
+handle
+    IO.Io {name, function, cause} =>
+    (
+        toErr(concat["IO Error: ", name,", ", exnMessage cause, "\n"]);
+        OS.Process.failure
+    )
+|   ex =>
+    (
+        toErr(concat["Uncaught exception: ", exnMessage ex, "\n"]);
+        OS.Process.failure
+    )
+```
+
+This looks strange but it makes sense. If the `main` function was written directly with `case argv of...` then the `OS.Process.success` and the `handle` block would have to be repeated for each case due to the imperative nature of these two things.
+
+The `count` function is shown later in the book. Now we can add it above `main`. There must have been another change in the language API (or another typo in the book), because on page 89 this part:
+
+```sml
+case TextIO.inputLine strm of
+    "" => (nchars, nwords, nlines)
+```
+
+ gives an error:
+
+```sml
+Error: case object and rules don't agree [tycon mismatch]
+  rule domain: string
+  object: string option
+  in expression:
+    (case (TextIO.inputLine strm)
+      of "" => (nchars,nwords,nlines)
+       | line => let val <pat> = <exp> in read (<exp>,<exp>,<exp>) end)
+```
+
+So `TextIO.inputLine strm` returns an `option` in the current `sml`. We can fix the issue like so:
+
+```sml
+case TextIO.inputLine strm of
+            NONE => (nchars, nwords, nlines) (* no lines left in file *)
+        |   SOME(line) => ...
+```
+
+and everything type-checks! :white_check_mark:
+
+I don't like the book's style of nesting functions, so I take them out (and pass the parameters of the top-function). I also remove the author's paranoid redundant parentheses everywhere. This is much nicer:
+
+```sml
+fun read(strm: TextIO.instream)(nchars: int, nwords: int, nlines: int)
+: int * int * int =
+    (* This ensures the line ends with a \n unless we are at eof. *)
+    case TextIO.inputLine strm of
+        NONE => (nchars, nwords, nlines)
+    |   SOME(line) =>
+        let
+            val words = String.tokens Char.isSpace line
+        in
+            read strm (nchars + size line, nwords + length words, nlines + 1)
+        end
+
+fun count(strm: TextIO.instream)(file: string): unit =
+let
+    val (nchars, nwords, nlines) = read strm (0, 0, 0)
+in
+    print(concat[
+        Int.toString nlines, " ",
+        Int.toString nwords, " ",
+        Int.toString nchars, " ",
+        file,
+        "\n"
+    ])
+end
+```
+
+We can load it up on the REPL and use it. It reports the correct number of lines, words, characters:
+
+```sml
+use "portable-io.sml";
+[opening portable-io.sml]
+val toErr = fn : string -> unit
+val read = fn : TextIO.instream -> int * int * int -> int * int * int
+val count = fn : TextIO.instream -> string -> unit
+val main = fn : string * string list -> OS.Process.status
+val it = () : unit
+main("", ["int.sml"]);
+4 20 87 int.sml
+val it = 0 : OS.Process.status
+```
+
+Again, if we wanted, we could write a `.cm` file and build it with `ml-build` and launch it with a script, so we'd have our own version of Unix utility `wc` written in `sml`! Neat.
+
 ### POSIX API
+
+Another very important part of the library! We have `OS.FileSys, OS.Path, OS.Process` (which we've been using a lot already), the [Time and Date stuff](https://smlfamily.github.io/Basis/time.html) and finally the operating-system-dependent [`Unix` structure](https://smlfamily.github.io/Basis/unix.html).
+
+We have another long code example with things that need to be fixed. At the bottom of page 91
+
+```sml
+case FS.readDir strm of
+    "" => rev files (* done *)
+    | f =>
+```
+
+we have a problem similar to the above; these cases need to be `NONE` and `SOME(...)`. (So in this case [`FS.readDir`](https://smlfamily.github.io/Basis/os-file-sys.html#SIG:OS_FILE_SYS.readDir:VAL) has changed.)
+
+There are many nested functions calling each other, and recursion, here, not to mention the total lack of type signatures to figure things out, it was tough taking them out and making it still work. The author really has a messy style.
+
+Anyway, it all type-checks and compiles! Now for the big showdown:
+
+```sml
+use "filesys.sml";
+[opening filesys.sml]
+structure FS : OS_FILE_SYS
+structure OP : OS_PATH
+val toErr = fn : string -> unit
+exception Error of string
+val open_dir = fn : string -> ?.OS_FileSys.dirstream
+val get_files = fn
+  : string -> ?.OS_FileSys.dirstream -> string list -> string list
+val show_wx = fn : string -> unit
+val scan_dir = fn : string -> unit
+val main = fn : string * string list -> OS.Process.status
+val it = () : unit
+main("", []);
+val it = 0 : OS.Process.status
+```
+
+Oh no... it's supposed to print the file in the current directory. Well that fizzled out quickly didn't it? The author says:
+
+> The `show_wx` function prints the file name if it is writable and executable.
+
+Turns out none of the files satisfy this check (here `FS` is short for `OS.FileSys`):
+
+```sml
+if FS.access(file, [FS.A_WRITE, FS.A_EXEC]) then ...
+```
+
+Let's take a look at the "access mode" things:
+
+```sml
+datatype access_mode = A_READ | A_WRITE | A_EXEC
+```
+
+So I'll just change the code to use `FS.A_READ` only:
+
+```sml
+- main("", []);
+./text.sml
+./filesys.sml
+./general.sml
+./option.sml
+./bool.sml
+./portable-io.sml
+./int.sml
+val it = 0 : OS.Process.status
+- 
+```
+
+YAY! :happy: :confetti_ball: :tada:
