@@ -884,7 +884,7 @@ val it = 2 : int
 - 
 ```
 
-Hey, we can use hexadecimal with `x`in `sml`! Who knew? Also `word` and hexadecimal `word` with the `w`:
+Hey, we can use hexadecimal with `x` in `sml`! Who knew? Also `word` and hexadecimal `word` with the `w`:
 
 ```sml
 - val i: int = 0x123;
@@ -957,7 +957,7 @@ in
         in
             (count strm file) handle x => (TextIO.closeIn strm; raise x);
             TextIO.closeIn strm
-            end;
+        end;
     OS.Process.success
 end
 handle
@@ -973,7 +973,7 @@ handle
     )
 ```
 
-This looks strange but it makes sense. If the `main` function was written directly with `case argv of...` then the `OS.Process.success` and the `handle` block would have to be repeated for each case due to the imperative nature of these two things.
+This looks strange but it makes sense. If the `main` function was written directly with `case argv of...` then the `OS.Process.success` and the `handle` block would have to be repeated for each case, I think? I should learn more about `handle`.
 
 The `count` function is shown later in the book. Now we can add it above `main`. There must have been another change in the language API (or another typo in the book), because on page 89 this part:
 
@@ -1050,7 +1050,7 @@ val it = 0 : OS.Process.status
 
 Again, if we wanted, we could write a `.cm` file and build it with `ml-build` and launch it with a script, so we'd have our own version of Unix utility `wc` written in `sml`! Neat.
 
-### POSIX API
+### Portable OS API
 
 Another very important part of the library! We have `OS.FileSys, OS.Path, OS.Process` (which we've been using a lot already), the [Time and Date stuff](https://smlfamily.github.io/Basis/time.html) and finally the operating-system-dependent [`Unix` structure](https://smlfamily.github.io/Basis/unix.html).
 
@@ -1086,7 +1086,7 @@ main("", []);
 val it = 0 : OS.Process.status
 ```
 
-Oh no... it's supposed to print the file in the current directory. Well that fizzled out quickly didn't it? The author says:
+Oh no... it's supposed to print the files in the current directory. Well that fizzled out quickly didn't it? The author says:
 
 > The `show_wx` function prints the file name if it is writable and executable.
 
@@ -1117,4 +1117,4 @@ val it = 0 : OS.Process.status
 - 
 ```
 
-YAY! :happy: :confetti_ball: :tada:
+YAY! :confetti_ball: :tada: :partying_face:
