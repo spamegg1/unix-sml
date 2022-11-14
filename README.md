@@ -3,19 +3,26 @@
 ## Getting Standard ML
 
 ```bash
-sudo apt install smlnj  # On Debian/Ubuntu and derivatives
-sudo dnf install polyml # No SML/NJ in Fedora repos, don't bother installing from source
+sudo apt install smlnj # On Debian/Ubuntu and derivatives
+sudo pacman -S smlnj   # On Arch and derivatives 
 ```
 
-On Debian/Ubuntu, this will install the language in `/usr/lib/smlnj`.
+On Debian/Ubuntu, this will install the language in `/usr/lib/smlnj`. 
+
+[Mac OS installer download link](http://smlnj.cs.uchicago.edu/dist/working/2022.1/smlnj-amd64-2022.1.pkg)
+
+[Windows installer download link](http://smlnj.cs.uchicago.edu/dist/working/110.99.3/smlnj-110.99.3.msi)
 
 The REPL is quite difficult to use because it does not support cycling through the history of commands with Up/Down arrow keys, or navigating left/right on the line of input with Left/Right arrow keys. To fix these issues, you should install `rlwrap`:
 
 ```bash
 sudo apt install rlwrap # Debian/Ubuntu
 sudo dnf install rlwrap # Fedora
-brew install rlwrap # MacOS users can get it from Homebrew: https://brew.sh
+sudo pacman -S rlwrap   # Arch
+brew install rlwrap     # MacOS users can get it on Homebrew: https://brew.sh
 ```
+
+(Windows users are screwed. [`rlwrap`](https://github.com/hanslub42/rlwrap) is not easily available as far as I know. You'd have to compile from source, which I don't expect to be easy on Windows.)
 
 Now you should make an alias in your `~/.bash_aliases` file:
 
@@ -23,20 +30,121 @@ Now you should make an alias in your `~/.bash_aliases` file:
 alias sml='rlwrap sml'
 ```
 
-By the way this applies to other ML implementations too, such as Poly/ML (which uses the `poly` command) or OCaml (which uses the command `ocaml`). Both of these are available on Debian/Ubuntu if you prefer:
+This applies to other ML implementations too (mentioned below):
 
 ```bash
-sudo apt install polyml
-sudo apt install ocaml
+alias poly='rlwrap poly'
+alias ocaml='rlwrap ocaml'
 ```
 
-I have all 3 installed but I'll be sticking to SML/NJ. Poly/ML should be 100% compatible with what we're doing (Fedora users can use that, because Fedora repositories don't have SML/NJ), and OCaml is an entirely different language at this point. It would be an interesting exercise to do this book in OCaml.
+### Other systems and ML's
+
+#### Fedora
+
+Fedora repositories do not have `smlnj`. You will have to [install](https://www.smlnj.org/dist/working/2021.1/install.html) from [source](http://smlnj.cs.uchicago.edu/dist/working/2021.1/config.tgz). Even more adventurous options below.
+
+#### Poly/ML
+
+There is [Poly/ML](https://www.polyml.org/index.html) on [Fedora](https://packages.fedoraproject.org/pkgs/polyml/polyml/), Debian and Arch: 
+
+```bash
+sudo apt install polyml # Debian/Ubuntu
+sudo dnf install polyml # Fedora
+sudo pacman -S polyml   # Arch
+```
+
+but it does not come with the SML/NJ libraries the book uses. You'll have to compile/install them from [source](https://github.com/eldesh/smlnjlib-polyml). Not easy. [Has](https://github.com/eldesh/mllex-polyml) [dependencies](https://github.com/eldesh/mlyacc-polyml) that have [build issues](https://github.com/eldesh/mlyacc-polyml/issues/3). Then you should be good.
+
+With Poly/ML you can fire up a REPL just like `sml`, but with the `poly` command instead. Normal `sml` syntax works, like `use "myfile.sml";`. You can use [the `polyc` command](https://www.polyml.org/FAQ.html#standalone) to create executables, but you need to install the development libraries (`libpolyml-dev` package on Ubuntu). I was able to compile a hello world program to an executable successfully. Not sure how it works when the SML/NJ library is involved.
+
+#### MLton
+
+[MLton](http://mlton.org/) (available on [Fedora](https://packages.fedoraproject.org/pkgs/mlton/mlton/) and Arch, not on Debian/Ubuntu): 
+
+```bash
+sudo dnf install mlton
+sudo pacman -S mlton
+```
+
+I was able to compile and install from [source](https://github.com/MLton/mlton) on Ubuntu, with
+
+```bash
+sudo make
+sudo make install
+```
+
+and it was installed under `/usr/local/lib/mlton` and it really does have ([a port of](http://mlton.org/SMLNJLibrary)) the [SML/NJ library](https://www.smlnj.org/doc/smlnj-lib/index.html) under `/usr/local/lib/mlton/sml/smlnj-lib`. I was able to compile a hello world program, but running it does not print anything. Don't know why.
+
+MLton is all about compile-optimizing the whole program, so it does not have a convenient REPL. This is a huge downside for going through the book. But you can make executables with it. There is also support for SML/NJ's Compilation Manager in [MLton](http://mlton.org/CompilationManager) (it has to port `.cm` files to its own format first). It has the `SMLofNJ` structure with the `exportFn` function we'll use below. So if you don't mind the absence of a REPL and you're OK with the "edit/compile/edit/compile" cycle way of doing things, then it might work for you.
+
+#### OCaml
+
+Of course there is also [OCaml](https://www.ocaml.org/) but it's an entirely different language at this point. It's available on Debian, Fedora and Arch:
+
+```bash
+sudo apt install ocaml # Debian/Ubuntu
+sudo dnf install ocaml # Fedora
+sudo pacman -S ocaml   # Arch
+```
+
+I have all 4 installed (`smlnj, poly, ocaml, mlton`) on Ubuntu but I'll stick to SML/NJ.
+
+It would be interesting to do this book with OCaml, but it would be a lot of work, more of an "adaptation" of this book rather than simply going through it. However you might find that many things are much easier to do with OCaml, since it's an industrial language and probably has better support for a lot of things out of the box.
+
+#### SML# (SMLsharp)
+
+Available only on Debian/Ubuntu (not on Fedora or Arch):
+
+```bash
+sudo apt install smlsharp
+```
+
+This gets me the latest version 4.0.0.
+
+I couldn't get it to work, it wants LLVM version 13, even though I have 14. After manually installing LLVM 13 and also `libmassivethreads-dev` at least it works. 
+I stand corrected: [it is available on other systems](https://github.com/smlsharp/repos): CentOS, Fedora, MacOS via Homebrew, and Windows (via WSL2, like Ubuntu).
+```bash
+brew tap smlsharp/smlsharp # for Mac OS, but should
+brew install smlsharp      # also work on any Linux
+```
+Does that look like a REPL? 
+```sml
+ ➜ smlsharp
+SML# unknown for x86_64-pc-linux-gnu with LLVM 13.0.1
+# "hello world";
+val it = "hello world" : string
+# 5+9;
+val it = 14 : int
+#
+```
+Very nice. But I could not compile a hello world program. It said `unbound variable: print`! Can you believe it? Looks like I have to do something similar to SML/NJ's `.cm` files. I need a `hello.smi` that says `_require "basis.smi"`.
+
+Nope, still no:
+
+```bash
+ ➜ smlsharp hello.sml -o hello
+command failed at status 256: gcc -Wl,-Bsymbolic-functions -flto=auto -ffat-lto-objects -flto=auto -Wl,-z,relro -Wl,-z,now /usr/lib/smlsharp/runtime/main.o /tmp/tmp.2q9kvI/000009.o /tmp/tmp.2q9kvI/000013.a /usr/lib/smlsharp/runtime/libsmlsharp.a -lrt -ldl -lm -lgmp -lmyth -lpthread  -o hello
+lto1: fatal error: bytecode stream in file ‘/usr/lib/smlsharp/runtime/main.o’ generated with LTO version 11.2 instead of the expected 11.3
+compilation terminated.
+lto-wrapper: fatal error: gcc returned 1 exit status
+compilation terminated.
+/usr/bin/ld: error: lto-wrapper failed
+collect2: error: ld returned 1 exit status
+```
+
+Anyway, moving on...
+
+#### Parts that might not work
+
+The parts of the book that are SML/NJ specific might not work on other ML implementations. The Compilation Manager (and the `.cm` files) to create executables, for example. As I mentioned above, you can try to use alternate methods (such as `polyc` or `mlton` or `smlsharp`) but you'll have to figure out those on your own. Poly/ML site says that it supports 100% of Standard ML as defined in the 1997 definition. Huh... turns out SML/NJ [deviates from the definition](http://mlton.org/SMLNJDeviations) but Poly/ML and MLton do not. Interesting! So much for "Standard" ML :laughing: But some of the deviations actually make sense and seem useful. 
 
 ## Changes since 2001
 
-Since the book is 21 years old (now in 2022), the Compilation Manager (`CM` from now on) of Standard ML (`sml` from now on) has changed quite a bit.
+Since the book is 22 years old (now in 2023), the Compilation Manager (`CM` from now on) of Standard ML (`sml` from now on) has changed quite a bit.
 
 The reference you need is the revised [Compilation Manager book](https://www.smlnj.org/doc/CM/new.pdf). It says the new `CM` is in effect since version 110.20, and I'm using `sml` version 110.79 on Ubuntu 22.04.
+
+You'll see some of the changes required below, as I go through the book.
 
 ## Chapter 2: Hello World
 
@@ -1118,3 +1226,7 @@ val it = 0 : OS.Process.status
 ```
 
 YAY! :confetti_ball: :tada: :partying_face:
+
+### POSIX API
+
+Lots and lots of stuff here!
