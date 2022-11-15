@@ -62,8 +62,8 @@ With Poly/ML you can fire up a REPL just like `sml`, but with the `poly` command
 [MLton](http://mlton.org/) (available on [Fedora](https://packages.fedoraproject.org/pkgs/mlton/mlton/) and Arch, not on Debian/Ubuntu): 
 
 ```bash
-sudo dnf install mlton
-sudo pacman -S mlton
+sudo dnf install mlton # Fedora
+sudo pacman -S mlton   # Arch
 ```
 
 I was able to compile and install from [source](https://github.com/MLton/mlton) on Ubuntu, with
@@ -132,7 +132,7 @@ compilation terminated.
 collect2: error: ld returned 1 exit status
 ```
 
-Anyway, moving on...
+There must be a way to turn off "link time optimization" in `gcc` by default. Anyway, moving on...
 
 #### Parts that might not work
 
