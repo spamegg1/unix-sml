@@ -2,6 +2,8 @@
 
 ## Getting Standard ML
 
+### Basic installation on Linux, MacOS, Windows
+
 ```bash
 sudo apt install smlnj # On Debian/Ubuntu and derivatives
 sudo pacman -S smlnj   # On Arch and derivatives 
@@ -12,6 +14,22 @@ On Debian/Ubuntu, this will install the language in `/usr/lib/smlnj`.
 [Mac OS installer download link](http://smlnj.cs.uchicago.edu/dist/working/2022.1/smlnj-amd64-2022.1.pkg)
 
 [Windows installer download link](http://smlnj.cs.uchicago.edu/dist/working/110.99.3/smlnj-110.99.3.msi)
+
+### Libraries
+
+You can also get all kinds of extra `sml` libraries and tools:
+
+```bash
+sudo apt install ml-yacc ml-lex ml-lpt libckit-smlnj libcml-smlnj libcmlutil-smlnj libexene-smlnj libmlnlffi-smlnj libmlrisctools-smlnj libpgraphutil-smlnj libsml-dev smlnj-doc
+```
+
+As a shortcut to install all available `smlnj` packages, you can use:
+
+```bash
+sudo apt install smlnj* *smlnj
+```
+
+### The REPL
 
 The REPL is quite difficult to use because it does not support cycling through the history of commands with Up/Down arrow keys, or navigating left/right on the line of input with Left/Right arrow keys. To fix these issues, you should install `rlwrap`:
 
@@ -35,13 +53,20 @@ This applies to other ML implementations too (mentioned below):
 ```bash
 alias poly='rlwrap poly'
 alias ocaml='rlwrap ocaml'
+alias smlsharp='rlwrap smlsharp'
+alias alice='rlwrap alice'
+alias mosml='rlwrap mosml'
 ```
 
 ### Other systems and ML's
 
 #### Fedora
 
-Fedora repositories do not have `smlnj`. You will have to [install](https://www.smlnj.org/dist/working/2021.1/install.html) from [source](http://smlnj.cs.uchicago.edu/dist/working/2021.1/config.tgz). Even more adventurous options below.
+Fedora repositories do not have `smlnj`. You will have to [install](https://www.smlnj.org/dist/working/2021.1/install.html) from [source](http://smlnj.cs.uchicago.edu/dist/working/2021.1/config.tgz). 
+
+#### Adventures in ML Wonderland
+
+Even more adventurous options below!
 
 #### Poly/ML
 
@@ -79,7 +104,7 @@ MLton is all about compile-optimizing the whole program, so it does not have a c
 
 #### OCaml
 
-Of course there is also [OCaml](https://www.ocaml.org/) but it's an entirely different language at this point. It's available on Debian, Fedora and Arch:
+Of course there is also [OCaml](https://www.ocaml.org/) but it's an entirely different language at this point (take a look into `/usr/lib/ocaml` and comparing it to `/usr/lib/smlnj/lib`). It's available on Debian, Fedora and Arch:
 
 ```bash
 sudo apt install ocaml # Debian/Ubuntu
@@ -87,9 +112,7 @@ sudo dnf install ocaml # Fedora
 sudo pacman -S ocaml   # Arch
 ```
 
-I have all 4 installed (`smlnj, poly, ocaml, mlton`) on Ubuntu but I'll stick to SML/NJ.
-
-It would be interesting to do this book with OCaml, but it would be a lot of work, more of an "adaptation" of this book rather than simply going through it. However you might find that many things are much easier to do with OCaml, since it's an industrial language and probably has better support for a lot of things out of the box.
+It would be interesting to do this book with OCaml, but it would be a lot of work, more of an "adaptation" of this book rather than simply going through it. However you might find that many things are much easier to do with OCaml, since it's an industrial language and probably has better support for a lot of things out of the box. There are WAY MORE library packages on Ubuntu for `ocaml` than `sml`.
 
 #### SML# (SMLsharp)
 
@@ -102,12 +125,17 @@ sudo apt install smlsharp
 This gets me the latest version 4.0.0.
 
 I couldn't get it to work, it wants LLVM version 13, even though I have 14. After manually installing LLVM 13 and also `libmassivethreads-dev` at least it works. 
-I stand corrected: [it is available on other systems](https://github.com/smlsharp/repos): CentOS, Fedora, MacOS via Homebrew, and Windows (via WSL2, like Ubuntu).
+
+I stand corrected: [it is available on other systems](https://github.com/smlsharp/repos): CentOS, Fedora, MacOS via [Homebrew](https://brew.sh), and Windows (via WSL2, like Ubuntu).
+
 ```bash
 brew tap smlsharp/smlsharp # for Mac OS, but should
 brew install smlsharp      # also work on any Linux
 ```
+One very interesting aspect of SML# is ["record polymorphism"](https://smlsharp.github.io/en/about/features/) which was mentioned as a hypothetical type system feature in some of the exam questions in [Programming Languages Part A](https://www.coursera.org/learn/programming-languages) course on Coursera.
+
 Does that look like a REPL? 
+
 ```sml
  ➜ smlsharp
 SML# unknown for x86_64-pc-linux-gnu with LLVM 13.0.1
@@ -117,7 +145,7 @@ val it = "hello world" : string
 val it = 14 : int
 #
 ```
-Very nice. But I could not compile a hello world program. It said `unbound variable: print`! Can you believe it? Looks like I have to do something similar to SML/NJ's `.cm` files. I need a `hello.smi` that says `_require "basis.smi"`.
+Very nice (needs the `rlwrap` treatment). But I could not compile a hello world program. It said `unbound variable: print`! Can you believe it? Looks like I have to do something similar to SML/NJ's `.cm` files. I need a `hello.smi` that says `_require "basis.smi"`.
 
 Nope, still no:
 
@@ -134,9 +162,70 @@ collect2: error: ld returned 1 exit status
 
 There must be a way to turn off "link time optimization" in `gcc` by default. Anyway, moving on...
 
+#### Moscow ML
+
+I was able to find and install a [`.deb` file](https://ppa.launchpadcontent.net/kflarsen/mosml/ubuntu/pool/main/m/mosml/mosml_2.10.2-0ubuntu0_amd64.deb) from January 2021, even though the [PPA repository](https://launchpad.net/~kflarsen/+archive/ubuntu/mosml) does not support Ubuntu 22.04. That was relatively easy. Not available on Fedora or Arch. You'd have to install from [source](https://github.com/kfl/mosml).
+
+It has a REPL! (You should do the `rlwrap` trick with this one too.) Nice.
+
+```sml
+➜ mosml
+Moscow ML version 2.10
+Enter `quit();' to quit.
+- 2+2;
+> val it = 4 : int
+- List.map (fn x => x*x) [1,2,3];        
+> val it = [1, 4, 9] : int list
+- quit();
+```
+
+#### MLkit
+
+Another compiler and toolkit (no REPL). Extremely easy to install on Linux and MacOS. [Get the binary release](https://github.com/melsman/mlkit/releases/tag/v4.7.2), unzip, do `sudo make install`. It just copies the binaries to your `/usr/local/bin/mlkit` directory.
+
+#### AliceML
+
+Quite difficult to install. Has to be compiled [from source](https://github.com/aliceml/aliceml). The instructions *almost* worked... compilation failed after 12 minutes. It seems to fail regarding [Gecode](https://www.gecode.org/). But it seems to have build most of the binaries already, just not all of them. Ah who cares.
+
+Is that a REPL? We use the `alice` command (once again, it needs the `rlwrap` treatment):
+
+```sml
+ ➜ alice
+Alice 1.4 ("Kraftwerk 'Equaliser' Album") mastered 2022/11/15
+### loaded signature from x-alice:/lib/system/Print
+### loaded signature from x-alice:/lib/tools/Inspector
+### loaded signature from x-alice:/lib/distribution/Remote
+- 2+2;
+val it : int = 4
+- List.map (fn x => x*x) [1, 2, 3];
+val it : int list = [1, 4, 9]
+- 
+That's all, said Humpty Dumpty. Good-bye.
+```
+
+Very funny :laughing: Reference to Kraftwerk is also super cool.
+
+#### Standard ML Package Manager
+
+What? [That's awesome!](https://github.com/diku-dk/smlpkg) So I can just install libraries easy peasy? Extremely easy to install on Linux and MacOS: [Get the binary release](https://github.com/diku-dk/smlpkg/releases/tag/v0.1.5), unzip, then `sudo make install` and it just copies the binary to `/usr/local/bin`.
+
+Okay, there are 19 packages listed, I'm gonna install all of them! See what happens! Looking at one of them:
+
+> This library is set up to work well with the SML package manager [smlpkg](https://github.com/diku-dk/smlpkg).  To use the package, in the root of your project directory, execute the command:
+>
+> ```bash
+> $ smlpkg add github.com/diku-dk/sml-aplparse
+> ```
+
+Ah, OK, I get it now. It's not "global" installation. Project-based instead. That's fine and still useful. Maybe I'll turn this repository into a package and release it at some point!
+
+#### What I have
+
+I have successfully installed: `smlnj, poly, ocaml, mlton, mlkit, smlsharp, smlpkg, alice` on Ubuntu, but I'll stick to SML/NJ.
+
 #### Parts that might not work
 
-The parts of the book that are SML/NJ specific might not work on other ML implementations. The Compilation Manager (and the `.cm` files) to create executables, for example. As I mentioned above, you can try to use alternate methods (such as `polyc` or `mlton` or `smlsharp`) but you'll have to figure out those on your own. Poly/ML site says that it supports 100% of Standard ML as defined in the 1997 definition. Huh... turns out SML/NJ [deviates from the definition](http://mlton.org/SMLNJDeviations) but Poly/ML and MLton do not. Interesting! So much for "Standard" ML :laughing: But some of the deviations actually make sense and seem useful. 
+The parts of the book that are SML/NJ specific might not work on other ML implementations. The Compilation Manager (and the `.cm` files) to create executables, for example. As I mentioned above, you can try to use alternate methods (such as `polyc` or `mlton` or `smlsharp`) but you'll have to figure out those on your own. I think Poly/ML is the most promising alternative but you have to get over the hurdles of installing the SML/NJ library. Poly/ML site says that it supports 100% of Standard ML as defined in the 1997 definition. Huh... turns out SML/NJ [deviates from the definition](http://mlton.org/SMLNJDeviations) but Poly/ML and MLton do not. Interesting! So much for "Standard" ML :laughing: But some of the deviations actually make sense and seem useful. 
 
 ## Changes since 2001
 
@@ -1230,3 +1319,152 @@ YAY! :confetti_ball: :tada: :partying_face:
 ### POSIX API
 
 Lots and lots of stuff here!
+
+## Chapter 4: The SML/NJ Extensions
+
+### The Unsafe API
+
+### Signals
+
+### The SMLofNJ API
+
+### The Socket API
+
+## Chapter 5: The Utility Libraries
+
+### Data Structures
+
+### Algorithms
+
+### Regular Expressions
+
+### Other Utilities
+
+## Chapter 6: Concurrency
+
+### Continuations
+
+### Coroutines
+
+### The Concurrent ML Model
+
+### A Counter Object
+
+### Some Tips on Using CML
+
+### Getting the Counter's Value
+
+### Getting the Value Through an Event
+
+### Getting the Value with a Time-Out
+
+### More on Time-Outs
+
+### Semaphores
+
+### Semaphores via Synchronous Variables
+
+## Chapter 7: Under the Hood
+
+### Memory Management
+
+#### Garbage Collection Basics
+
+#### Multi-Generational GC
+
+#### Run-Time Arguments for the GC
+
+#### Heap Object Layout
+
+### Performance
+
+#### Basic SML/NJ Performance
+
+### Memory Performance
+
+#### CML Channel Communication and Scheduling
+
+#### Spawning Threads for Time-outs
+
+#### Behaviour of Timeout Events
+
+## Chapter 8: The Swerve Web Server
+
+### Introduction
+
+### The HTTP Protocol
+
+### The Resource Store
+
+### Server Configuration
+
+### The Architecture of the Server
+
+### Building and Testing the Server
+
+## Chapter 9: The Swerve Detailed Design
+
+### Introduction
+
+### The Organization of the Code
+
+### The Main Layer
+
+### The Server Layer
+
+### The Store Layer
+
+### The IETF Layer
+
+### The Config Layer
+
+### The Common Layer
+
+## Chapter 10: Conclusion
+
+The author gives quite the praise to FP (functional programming):
+
+>Functional languages certainly scale to the size of real-world projects by nature. The productivity improvement from a functional language allows a programmer to tackle much larger projects. I estimate at least a 10 to 1 improvement in productivity over the C language just from a reduction in the number of lines of code needed. There is a large productivity boost from the absence of memory management bugs and the like that plague C programs. Further the strong static type system often means that sizable pieces of SML code just works first time.
+
+These are very obvious points, but I didn't expect a [lifelong C programmer](http://www.anthony-shipman.id.au/resume/resume.html) from the old days to say this. The author is surely open-minded and objective about it! In fact he was open-minded all the way back in 2000 when FP wasn't even known all that much (now it's getting a lot more popular). Usually old-school C programmers don't like FP.
+
+> ...SML/NJ does perform well. Without much trouble it achieved around 2/3 the speed of Apache, which is written in C. Anecdotal evidence has it that C++ is about 1/2 the speed of C. ...This suggests that SML/NJ can certainly compete with C++ or Java.
+
+Wow. I wonder how much things improved since 2001. Those other languages must have improved quite a lot too. MLton is definitely the fastest ML out there.
+
+> The big impediment to wider use of SML in the real-world is support for features such as databases, graphics, encryption, native languages (Unicode), true concurrency etc.
+
+Valid points. SMLsharp [focuses](https://smlsharp.github.io/en/about/features/) on the databases part, especially SQL; and the concurrency part. Poly/ML addresses [concurrency](https://www.polyml.org/documentation/Reference/Thread.xml). [AliceML](https://www.ps.uni-saarland.de/alice/) addresses SQL and GTK, and addresses concurrency with futures and laziness. There are also `sml` to `js` converters in many ML implementations, such as [MLkit](https://github.com/melsman/mlkit#smltojs---the-javascript-backend). As for encryption and Unicode, there are [Unicode](https://github.com/diku-dk/sml-unicode) and [SHA-256](https://github.com/diku-dk/sml-sha256) packages available through [`smlpkg`](https://github.com/diku-dk/smlpkg).
+
+> The standard basis library is looking rather dated. It hasn’t progressed in years. A future release of SML/NJ will include a native C-language interface.
+
+Is this true in 2023? Yes, it exists [now](https://www.smlnj.org/doc/SMLNJ-C/index.html). I think this is referring to the "Foreign Function Interface" available in [Poly/ML](https://www.polyml.org/documentation/Reference/Foreign.xml) and [MLton](http://mlton.org/ForeignFunctionInterface). SML# [seems to have one too.](https://smlsharp.github.io/en/about/features/) So does [Moscow ML](https://mosml.org/). So does [MLkit](https://elsman.com/mlkit/). Very nice.
+
+> The choice of a web server for this book neatly avoids the issue of database programming. ...SML/NJ desperately needs an ODBC-like mechanism.
+
+There is [SML Server]()
+
+> ...Personally I consider Concurrent ML to be a "killer" feature of SML/NJ. ...It’s a shame that CML is not built-in to SML/NJ instead of being an add-on.
+
+[It is now!](https://www.smlnj.org/doc/FAQ/install.html#what) 
+
+> **What does the SML/NJ system consist of?** 
+>
+> SML/NJ 110 provides a native code compiler that can be used interactively and can also build stand-alone applications, along with a programming environment made up of various tools (CM, ML-Lex, ML-Yacc, CML, eXene, etc.), and a collection of libraries (smlnj-lib).
+
+It comes bundled with the standard `smlnj` installation. It's under `/usr/lib/smlnj/lib/cml` and `/usr/lib/smlnj/lib/cml-lib`. If it's missing, it can be installed through the `libcml-smlnj` package (at least on Ubuntu).
+
+Anyway.. the author's points are all addressed by the industrial-strength OCaml (or Scala, or Haskell...) Functional languages have come a long way!
+
+> The OCaml system[OCaml] is an implementation of a language in the ML family. The language is different from Standard ML and a bit on the experimental side for my taste. However it has recently seen much active
+> development in the area of infrastructure...
+
+Yep, that was 2000-2001. Now OCaml is full-blown in 2023. Especially [on the OCaml home page](https://ocaml.org):
+
+> OCaml 5.0 is beta! OCaml 5.0 is the next  major release of OCaml, which comes with support for shared-memory parallelism through domains and direct-style concurrency through algebraic effects!
+
+Finally:
+
+> The bottom line is: yes you can nowadays develop real-world applications in functional languages, getting leverage off of their special features such as greater productivity and reliability. Try it out!
+
+Thank you sir! Hats off to you for trying this 22 years ago. What an absolute madlad.
