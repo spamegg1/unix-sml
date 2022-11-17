@@ -1,16 +1,14 @@
 structure Main =
 struct
-    fun main(arg0: string, argv: string list): OS.Process.status =
-    (
+    fun main(arg0: string, argv: string list): OS.Process.status = (
         case argv of
             [] => ()
-        |   first :: rest =>
-            (
+        |   first :: rest => (
                 print first;
                 app (fn arg => (print " "; print arg)) rest;
                 print "\n"
             );
-            OS.Process.success
+        OS.Process.success
     )
 
     val _: unit = SMLofNJ.exportFn("echo", main)

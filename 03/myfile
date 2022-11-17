@@ -1,0 +1,2 @@
+This file is here as dummy just to change its permissions with
+`Posix.FileSys.chmod` and to use our `stat` function on it.

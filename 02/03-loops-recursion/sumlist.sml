@@ -8,12 +8,12 @@ fun sumlist1([]: int list): int = 0
 
 (* tail recursion *)
 fun sumlist2(the_list: int list): int =
-    let
-        fun loop([]: int list)(sum: int): int = sum
-        |   loop (v :: rest) sum = loop rest (sum + v)
-    in
-        loop the_list 0
-    end
+let
+    fun loop([]: int list)(sum: int): int = sum
+    |   loop (v :: rest) sum = loop rest (sum + v)
+in
+    loop the_list 0
+end
 
 (* using fold *)
 fun sumlist3(the_list: int list): int =

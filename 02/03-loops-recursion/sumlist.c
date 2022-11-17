@@ -4,8 +4,7 @@ typedef struct node {
 } Node;
 
 int
-sumlist(Node* the_list) // I removed const here to get rid of warning
-{
+sumlist(Node* the_list) { // I removed const here to get rid of warning
     int sum = 0;
     Node* l;
 
@@ -18,8 +17,7 @@ sumlist(Node* the_list) // I removed const here to get rid of warning
 }
 
 int
-sumlist1(const Node* the_list)
-{
+sumlist1(const Node* the_list) {
     const Node* list;           /* args to loop */
     int sum;
 
@@ -29,12 +27,10 @@ sumlist1(const Node* the_list)
 
 
 loop:
-    if (list == 0)
-    {
+    if (list == 0) {
         return sum;             /* value returned from loop */
     }
-    else
-    {
+    else {
         int v = list->value;
         const Node* rest = list->next;
 
@@ -45,7 +41,6 @@ loop:
 }
 
 // just to make it compile.
-int main(int argc, char *argv[])
-{
+int main(int argc, char *argv[]) {
     return 0;
 }

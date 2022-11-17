@@ -7,8 +7,7 @@ struct
     (* This represents an option found on the command line. *)
     datatype Option = Verbose | Help | Width of string | Height of string
 
-    fun NoArg(opt: Option): Option G.arg_descr =
-        G.NoArg (fn () => opt)
+    fun NoArg(opt: Option): Option G.arg_descr = G.NoArg (fn () => opt)
 
     fun ReqArg(opt: string -> Option)(descr: string): Option G.arg_descr =
         G.ReqArg (opt, descr)
@@ -41,16 +40,16 @@ struct
     val opt_tbl: (Option list) ref = ref [] (* mutable reference *)
 
     fun parseCmdLine(argv: string list): string list =
-        let
-            val (opts, files) = G.getOpt {
-                argOrder = G.RequireOrder,
-                options = options,
-                errFn = toErr
-            } argv
-        in
-            opt_tbl := opts; (* mutation! now opt_tbl is: ref opts *)
-            files
-        end
+    let
+        val (opts, files) = G.getOpt {
+            argOrder = G.RequireOrder,
+            options = options,
+            errFn = toErr
+        } argv
+    in
+        opt_tbl := opts; (* mutation! now opt_tbl is: ref opts *)
+        files
+    end
 
     (* The ! operator is dereference, like * in C. It gets rid of "ref".
         opt_tbl is: ref [...]: list ref
@@ -93,8 +92,7 @@ struct
 
     fun usage(): unit = print(G.usageInfo{header = "usage:", options = options})
 
-    fun show_stuff(files: string list, width: string, height: string): unit =
-    (
+    fun show_stuff(files: string list, width: string, height: string): unit = (
         print "The files are";
         app (fn f => (print " "; print f)) files;
         print ".\n";
@@ -119,8 +117,7 @@ struct
             show_stuff(files, width, height);
             OS.Process.success
     end
-    handle Usage msg =>
-    (
+    handle Usage msg => (
         toErr msg;
         toErr "\n";
         (* toErr(usage()); *)

@@ -23,9 +23,8 @@ fun countLines(s: string): int = Substring.foldl
 fun ibr(reader: 'a -> (char * 'a) option)(char_strm: 'a)
 : ((int * bool * real) * 'a) option =
 let
-    (* Read all characters to the end of the
-    string or a newline. This returns the
-    line and the rest of the stream. *)
+    (*  Read all characters to the end of the string or a newline. *)
+    (*  This returns the line and the rest of the stream. *)
     fun get_line(charStrm: 'a)(rev_line: char list): 'a * string =
         case reader charStrm of
             NONE => (charStrm, implode(rev rev_line))     (* ran out of chars *)

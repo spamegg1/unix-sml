@@ -51,13 +51,13 @@ fun require_option(opts: Option list)(name: string)(and_value: bool): string =
     |   SOME (SOME v) => v                           (* found and has a value *)
 
 
-fun main(arg0: string, argv: string list): OS.Process.status = let
+fun main(arg0: string, argv: string list): OS.Process.status =
+let
     val (opts, files) = parse_cmdline argv
     val width : string = require_option opts "width" true
     val height: string = require_option opts "height" true
 
-    fun show_stuff(): unit =
-    (
+    fun show_stuff(): unit = (
         print "The files are";
         app (fn f => (print " "; print f)) files;
         print ".\n";
@@ -67,19 +67,18 @@ fun main(arg0: string, argv: string list): OS.Process.status = let
             ])
         else ()
     )
-    in
-        if has_option opts "help" then
-            print "some helpful blurb\n"
-        else
-            show_stuff();
+in
+    if has_option opts "help" then
+        print "some helpful blurb\n"
+    else
+        show_stuff();
 
-        OS.Process.success
-    end
-    handle Usage msg =>
-    (
-        TextIO.output(TextIO.stdErr, concat[
-            msg, "\nUsage: [-h] [-v|-verbose] [-width width]",
-            " [-height height] files\n"
-        ]);
-        OS.Process.failure
-    )
+    OS.Process.success
+end
+handle Usage msg => (
+    TextIO.output(TextIO.stdErr, concat[
+        msg, "\nUsage: [-h] [-v|-verbose] [-width width]",
+        " [-height height] files\n"
+    ]);
+    OS.Process.failure
+)

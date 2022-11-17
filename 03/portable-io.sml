@@ -25,11 +25,9 @@ in
     ])
 end
 
-fun main(arg0: string, argv: string list): OS.Process.status =
-let
-in
+fun main(arg0: string, argv: string list): OS.Process.status = (
     case argv of
-        [] => count TextIO.stdIn ""
+        []          => count TextIO.stdIn ""
     |   (file :: _) =>
         let
             val strm = TextIO.openIn file
@@ -38,15 +36,13 @@ in
             TextIO.closeIn strm
         end;
     OS.Process.success
-end
+)
 handle
-    IO.Io {name, function, cause} =>
-    (
+    IO.Io {name, function, cause} => (
         toErr(concat["IO Error: ", name,", ", exnMessage cause, "\n"]);
         OS.Process.failure
     )
-|   ex =>
-    (
+|   ex => (
         toErr(concat["Uncaught exception: ", exnMessage ex, "\n"]);
         OS.Process.failure
     )

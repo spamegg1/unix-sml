@@ -53,7 +53,8 @@ struct
     (* This exception will bomb with a usage message. *)
     exception Usage of string
 
-    fun parse_cmdline(argv: string list): string list = let
+    fun parse_cmdline(argv: string list): string list =
+    let
         fun loop ([]: string list): string list = []          (* no more args *)
         |   loop ("-h" :: rest)       = add ("help", NONE) rest
         |   loop ("-v" :: rest)       = add ("verbose", NONE) rest
@@ -69,15 +70,14 @@ struct
             raise Usage (concat ["The value for the option ", name, " is missing."])
         |   get_value name (v :: rest) = add (name, SOME v) rest
 
-        and add(pair: string * string option)(rest: string list): string list =
-        (
+        and add(pair: string * string option)(rest: string list): string list = (
             Global.addOption pair;
             loop rest
         )
 
-        in
-            loop argv
-        end
+    in
+        loop argv
+    end
 
     fun require_option(name: string)(and_value: bool): string =
         case Global.getOption name of
@@ -94,8 +94,7 @@ struct
         val width : string = require_option "width" true
         val height: string = require_option "height" true
 
-        fun show_stuff(): unit =
-        (
+        fun show_stuff(): unit = (
             print "The files are";
             app (fn f => (print " "; print f)) files;
             print ".\n";
@@ -115,8 +114,7 @@ struct
 
             OS.Process.success
         end
-        handle Usage msg =>
-        (
+        handle Usage msg => (
             TextIO.output(TextIO.stdErr, concat[msg,
                 "\nUsage: [-h] [-v|-verbose] [-width width]",
                 " [-height height] files\n"

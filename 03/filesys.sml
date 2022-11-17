@@ -22,11 +22,8 @@ fun get_files(dir: string)(strm: FS.dirstream)(files: string list): string list 
 
 fun show_wx(file: string): unit =
     (* if FS.access(file, [FS.A_WRITE, FS.A_EXEC]) then *)
-    if FS.access(file, [FS.A_READ]) then
-    (
-        print file;
-        print "\n"
-    )
+    if FS.access(file, [FS.A_READ])
+    then (print file; print "\n")
     else ()
 
 fun scan_dir(dir: string): unit =
@@ -43,24 +40,20 @@ in
     app scan_subdir files
 end
 
-fun main(arg0: string, argv: string list): OS.Process.status =
-let
-in
+fun main(arg0: string, argv: string list): OS.Process.status = (
     case argv of
         [] => scan_dir OP.currentArc
     |   (file :: _) => scan_dir file;
 
     OS.Process.success
-end
+)
 handle
-    OS.SysErr (msg, _) =>
-    (
+    OS.SysErr (msg, _) => (
         toErr(concat["System Error: ", msg, "\n"]);
         OS.Process.failure
     )
 |   Error msg => (toErr msg; OS.Process.failure)
-|   x =>
-    (
+|   x => (
         toErr(concat["Uncaught exception: ", exnMessage x,"\n"]);
         OS.Process.failure
     )

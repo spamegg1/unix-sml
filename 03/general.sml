@@ -18,21 +18,18 @@ fun run(args: string list): OS.Process.status =
         success
     end
     handle
-        IO.Io {name, function, cause} =>
-        (
+        IO.Io {name, function, cause} => (
             toErr(concat[
                 "IO Error ", name," ", function, " ", exnMessage cause, "\n"
             ]);
             failure
         )
     |   Fatal => (toErr "Aborting\n"; failure)
-    |   InternalError msg =>
-        (
+    |   InternalError msg => (
             toErr(concat["Internal error, ", msg, "\n"]);
             failure
         )
-    |   ex => (* misc exception *)
-        (
+    |   ex => ( (* misc exception *)
             toErr(concat["Uncaught exception: ", exnMessage ex,"\n"]);
             failure
         )

@@ -40,7 +40,7 @@ sudo pacman -S rlwrap   # Arch
 brew install rlwrap     # MacOS users can get it on Homebrew: https://brew.sh
 ```
 
-(Windows users are screwed. [`rlwrap`](https://github.com/hanslub42/rlwrap) is not easily available as far as I know. You'd have to compile from source, which I don't expect to be easy on Windows.)
+(Windows users are screwed. [`rlwrap`](https://github.com/hanslub42/rlwrap) is not easily available as far as I know. I looked at [Chocolatey](https://chocolatey.org/), [Scoop](https://scoop.sh/), [Ninite](https://ninite.com/) and [Winget](https://winget.run/); none of them have it. You'd have to compile from source, which I don't expect to be easy on Windows.)
 
 Now you should make an alias in your `~/.bash_aliases` file:
 
@@ -53,9 +53,9 @@ This applies to other ML implementations too (mentioned below):
 ```bash
 alias poly='rlwrap poly'
 alias ocaml='rlwrap ocaml'
-alias smlsharp='rlwrap smlsharp'
 alias alice='rlwrap alice'
 alias mosml='rlwrap mosml'
+alias smlsharp='rlwrap smlsharp'
 ```
 
 ### Other systems and ML's
@@ -104,7 +104,7 @@ MLton is all about compile-optimizing the whole program, so it does not have a c
 
 #### OCaml
 
-Of course there is also [OCaml](https://www.ocaml.org/) but it's an entirely different language at this point (take a look into `/usr/lib/ocaml` and comparing it to `/usr/lib/smlnj/lib`). It's available on Debian, Fedora and Arch:
+Of course there is also [OCaml](https://www.ocaml.org/) but it's an entirely different language at this point (take a look into `/usr/lib/ocaml` and compare it to `/usr/lib/smlnj/lib`). It's available on Debian, Fedora and Arch:
 
 ```bash
 sudo apt install ocaml # Debian/Ubuntu
@@ -185,7 +185,7 @@ Another compiler and toolkit (no REPL). Extremely easy to install on Linux and M
 
 #### AliceML
 
-Quite difficult to install. Has to be compiled [from source](https://github.com/aliceml/aliceml). The instructions *almost* worked... compilation failed after 12 minutes. It seems to fail regarding [Gecode](https://www.gecode.org/). But it seems to have build most of the binaries already, just not all of them. Ah who cares.
+Quite difficult to install. Has to be compiled [from source](https://github.com/aliceml/aliceml). The instructions *almost* worked... compilation failed after 12 minutes. It seems to fail regarding [Gecode](https://www.gecode.org/). But it seems to have built most of the binaries already, just not all of them. *Edit:* the developer [responded within hours](https://github.com/aliceml/aliceml/issues/22) and fixed the issue.
 
 Is that a REPL? We use the `alice` command (once again, it needs the `rlwrap` treatment):
 
@@ -203,7 +203,7 @@ val it : int list = [1, 4, 9]
 That's all, said Humpty Dumpty. Good-bye.
 ```
 
-Very funny :laughing: Reference to Kraftwerk is also super cool.
+Very funny :laughing: Reference to Kraftwerk is also super cool. However we probably cannot use it for this book due to [its known limitations](https://www.ps.uni-saarland.de/alice/manual/limitations.html) which include the `OS.FileSys, OS.IO, Unix` and `StreamIO` structures and functors heavily used by the book.
 
 #### Standard ML Package Manager
 
@@ -473,7 +473,7 @@ The width is 10.
 The height is 10.
 ```
 
-It's working properly.
+It's working properly! :confetti_ball: :tada: :partying_face:
 
 #### The Deluxe `getopt`: `getopt3.sml`
 
@@ -597,8 +597,7 @@ Normally `parse_cmdline` was inside `structure Main` but `parseCmdLine` mutates 
 I am going to make a change, and move `fun show_stuff()` outside of `fun main`. This requires passing the `files, width` and `height` as parameters to `show_stuff()`:
 
 ```sml
-fun show_stuff(files: string list, width: string, height: string): unit =
-(
+fun show_stuff(files: string list, width: string, height: string): unit = (
     print "The files are";
     app (fn f => (print " "; print f)) files;
     print ".\n";
@@ -718,8 +717,7 @@ struct
 
     (* The ! operator is dereference, like * in C. It gets rid of "ref".
         opt_tbl is: ref [...]: list ref
-        !opt_tbl is: [...]: list
-    *)
+        !opt_tbl is: [...]: list           *)
     fun hasVerbose(): bool = List.exists (fn opt => opt = Verbose) (!opt_tbl)
 
     fun hasHelp(): bool = List.exists (fn opt => opt = Help) (!opt_tbl)
@@ -750,15 +748,13 @@ struct
         |   SOME v => v
 end
 
-
 structure Main =
 struct
     open Common
     
     fun usage () = print (G.usageInfo{header = "usage:", options = options})
 
-    fun show_stuff(files: string list, width: string, height: string): unit =
-    (
+    fun show_stuff(files: string list, width: string, height: string): unit = (
         print "The files are";
         app (fn f => (print " "; print f)) files;
         print ".\n";
@@ -783,8 +779,7 @@ struct
             show_stuff(files, width, height);
             OS.Process.success
     end
-    handle Usage msg =>
-    (
+    handle Usage msg => (
         toErr msg;
         toErr "\n";
         usage();
@@ -839,7 +834,7 @@ Overall opinion of the `getopt` section: the `GetOpt` library seems nice, would 
 
 ### Preliminaries
 
-#### The value restriction
+#### The value restriction: a fun digression
 
 Interesting: the book says
 
@@ -976,7 +971,7 @@ scala> val z = List[T]()
 
 This is a general rule not limited to references (`var`). So I tried my best to break the Scala type system, but I cannot find any problem.
 
-Anyway... interesting things happening in the functional world over the last 20 years huh?
+Anyway... interesting things happening in the functional world over the last 20 years huh? **Digression over.**
 
 But now that weird little side thing that was mentioned in the course becomes clearer, because that course used no imperative programming, and now we're doing a lot of imperative programming in the book. ***We have to always instantiate `ref` types to some concrete type.***
 
@@ -1145,6 +1140,7 @@ On page 87 there is code with a `let` block that's empty (also `count` is missin
 ```sml
 fun main(arg0: string, argv: string list): OS.Process.status =
 let
+    (* there is nothing here *)
 in
     case argv of
         [] => count TextIO.stdIn ""
@@ -1157,20 +1153,29 @@ in
         end;
     OS.Process.success
 end
-handle
-    IO.Io {name, function, cause} =>
-    (
-        toErr(concat["IO Error: ", name,", ", exnMessage cause, "\n"]);
-        OS.Process.failure
-    )
-|   ex =>
-    (
-        toErr(concat["Uncaught exception: ", exnMessage ex, "\n"]);
-        OS.Process.failure
-    )
 ```
 
-This looks strange but it makes sense. If the `main` function was written directly with `case argv of...` then the `OS.Process.success` and the `handle` block would have to be repeated for each case, I think? I should learn more about `handle`.
+This looks strange but it is equivalent to putting parentheses around the `case` block. If we want to do a bunch of side effects followed by a return value, like:
+
+```sml
+a();
+b();
+c();
+OS.Process.success
+```
+
+then we can either use the "empty let block" approach like above, or put parentheses around it. For example:
+
+```sml
+fun main(arg0: string, argv: string list): OS.Process.status = (
+    a();
+    b();
+    c();
+    OS.Process.success
+)
+```
+
+Otherwise it won't type-check. Also, if we want the block to be followed by a `handle` block, we need the parentheses (or a `let-in-end` block).
 
 The `count` function is shown later in the book. Now we can add it above `main`. There must have been another change in the language API (or another typo in the book), because on page 89 this part:
 
@@ -1245,7 +1250,7 @@ main("", ["int.sml"]);
 val it = 0 : OS.Process.status
 ```
 
-Again, if we wanted, we could write a `.cm` file and build it with `ml-build` and launch it with a script, so we'd have our own version of Unix utility `wc` written in `sml`! Neat.
+Again, if we wanted, we could write a `.cm` file and build it with `ml-build` and launch it with a script, so we'd have our own version of Unix utility `wc` written in `sml`! Neat. It's possible the author is implicitly assuming that we are doing that. I'll make the executables when we get to the more serious stuff.
 
 ### Portable OS API
 
@@ -1261,7 +1266,7 @@ case FS.readDir strm of
 
 we have a problem similar to the above; these cases need to be `NONE` and `SOME(...)`. (So in this case [`FS.readDir`](https://smlfamily.github.io/Basis/os-file-sys.html#SIG:OS_FILE_SYS.readDir:VAL) has changed.)
 
-There are many nested functions calling each other, and recursion, here, not to mention the total lack of type signatures to figure things out, it was tough taking them out and making it still work. The author really has a messy style.
+There are many nested functions calling each other, and recursion, here, not to mention the total lack of type signatures to figure things out, it was tough taking them out and making it still work. The author really has a messy C-ish style.
 
 Anyway, it all type-checks and compiles! Now for the big showdown:
 
@@ -1314,11 +1319,109 @@ val it = 0 : OS.Process.status
 - 
 ```
 
-YAY! :confetti_ball: :tada: :partying_face:
+YAY! :confetti_ball: :tada: :partying_face: It also works in nested directories, prints all the files with their paths.
 
 ### POSIX API
 
-Lots and lots of stuff here!
+Lots and lots of stuff here! There are so many structures, types and functions it's dizzying: `Posix.FileSys, Posix.SysDB, Posix.ProcEnv`, and we are also using `SysWord, Date, Position, StringCvt`. We can change file permissions with `Posix.FileSys.chmod`. The [`Posix.FileSys` signature](https://smlfamily.github.io/Basis/posix-file-sys.html) has weird sub-structure names, like `S` or `O` or `ST`. 
+
+There is code for a `stat` function that is a simplified version of the Unix `stat` utility. Again, missing code and functions are introduced later. I am seeing the use of `local` for the first time in `sml` here (here `FS` is `Posix.FileSys`):
+
+```sml
+local
+    val type_preds: ((stat -> bool) * string) list = [
+        (FS.ST.isDir, "Directory"),
+        (FS.ST.isChr, "Char Device"),
+        (FS.ST.isBlk, "Block Device"),
+        (FS.ST.isReg, "Regular File"),
+        (FS.ST.isFIFO, "FIFO"),
+        (FS.ST.isLink, "Symbolic Link"),
+        (FS.ST.isSock, "Socket")
+    ]
+in
+    fun filetypeToString(st: stat) =
+    let
+        val pred = List.find (fn (pr, _) => pr st) type_preds
+    in
+        case pred of
+            SOME (_, name) => name
+        |   NONE => "Unknown"
+    end
+end
+```
+
+The book says:
+
+> I’ve put the list of predicates within a local block so that it is private to `filetypeToString` without being inside it. This way the list isn’t built every time that the function is called, which is wasteful. This doesn’t matter on this small program but it very well might in other programs.
+
+That's useful! This is used many times later.
+
+On page 101 there is a typo `pun` which should be `fun`. Maybe it's a pun intended?
+
+Lots of helper functions for `stat`. The code as presented in the book type-checks, but it's impossible to understand what's happening. To add my type annotations and make it all type-check, I had to track down a lot of types:
+
+```sml
+Posix.FileSys.S.flags (* an alias for mode *)
+Posix.FileSys.S.mode 
+Posix.FileSys.ST.stat
+Posix.FileSys.uid
+Posix.FileSys.gid
+Posix.ProcEnv.uid
+Posix.ProcEnv.gid
+Posix.SysDB.uid
+Posix.SysDB.gid
+```
+
+The code is displayed first, and all these structures are explained in later sections, so it's quite confusing.
+
+Well, it *does* work:
+
+```sml
+main("", ["myfile"]);
+File: myfile
+Size: 123
+Type: Regular File
+Mode: 644/rw-r--r--
+Uid: 1000/spam
+Gid: 1000/spam
+Device: 3,1
+Inode: 1838772
+Links: 1
+Access: Wed Nov 16 23:47:57 2022
+Modify: Thu Nov 17 13:34:51 2022
+Change: Thu Nov 17 13:34:51 2022
+val it = 0 : OS.Process.status
+```
+
+:confetti_ball::tada: :partying_face: 
+
+#### POSIX.IO
+
+Now we get to the more monadic stuff.
+
+It looks like `PosixTextPrimIO` and `PosixBinPrimIO` do not exist anymore, they were ["lifted" to `Posix.IO`](https://smlnj.sourceforge.net/NEWS/110.46-README.html) instead. Apparently this happened in 2004! So here are the changes:
+
+| Old (book, 2001)           | New (2004-now)         |
+| -------------------------- | ---------------------- |
+| `PosixBinPrimIO.mkReader`  | `PosixIO.mkBinReader`  |
+| `PosixBinPrimIO.mkWriter`  | `PosixIO.mkBinWriter`  |
+| `PosixTextPrimIO.mkWriter` | `PosixIO.mkTextReader` |
+| `PosixTextPrimIO.mkWriter` | `PosixIO.mkTextWriter` |
+
+Very sensible. If we make these changes, the code on page 102 type-checks. 
+
+The top part on page 103 still does not work. This code is supposed to be directly taken from the `Unix` structure; the code must have changed a lot since then, since I could not find it in the source code or the documentation. The `openOutFD` and `openInFD` functions don't exist anymore; they were probably renamed to `openOut` and `openIn`.
+
+`TextIO.mkInstream` does not accept `NONE` as its second argument, though. The type-checker wants a `TextIO.StreamIO.vector` which, in this case, [is a `string`!](https://smlfamily.github.io/Basis/stream-io.html#SIG:STREAM_IO.vector:TY) The correct version is now
+
+```sml
+fun openInFD(name: string, fd: Posix.IO.file_desc): TextIO.instream =
+    TextIO.mkInstream(
+        TextIO.StreamIO.mkInstream(fdReader(name, fd), "")
+    )
+```
+
+
 
 ## Chapter 4: The SML/NJ Extensions
 
@@ -1438,11 +1541,34 @@ Valid points. SMLsharp [focuses](https://smlsharp.github.io/en/about/features/) 
 
 > The standard basis library is looking rather dated. It hasn’t progressed in years. A future release of SML/NJ will include a native C-language interface.
 
-Is this true in 2023? Yes, it exists [now](https://www.smlnj.org/doc/SMLNJ-C/index.html). I think this is referring to the "Foreign Function Interface" available in [Poly/ML](https://www.polyml.org/documentation/Reference/Foreign.xml) and [MLton](http://mlton.org/ForeignFunctionInterface). SML# [seems to have one too.](https://smlsharp.github.io/en/about/features/) So does [Moscow ML](https://mosml.org/). So does [MLkit](https://elsman.com/mlkit/). Very nice.
+Is this true in 2023? I think this is referring to the "Foreign Function Interface". Yes, it exists [now](https://www.smlnj.org/doc/SMLNJ-C/index.html). There is a library package `libmlnlffi-smlnj` ([No Longer Foreign Function Interface](http://www.jeffvaughan.net/docs/nlffi.pdf)) on Ubuntu, which installs under `/usr/lib/smlnj/lib/c` and a lot of documentation under `/usr/share/doc/libmlnlffi-smlnj`, and a binary executable `ml-nlffigen` that generates glue code between C and `sml`:
 
-> The choice of a web server for this book neatly avoids the issue of database programming. ...SML/NJ desperately needs an ODBC-like mechanism.
+```bash
+ ➜ ccat /usr/share/doc/libmlnlffi-smlnj/README
+This is the ML-NLFFI Library, the core of a new foreign-function
+interface for SML/NJ.
 
-There is [SML Server]()
+Library $c/c.cm provides:
+
+  - an encoding of the C type system in ML
+  - dynamic linking (an interface to dlopen/dlsym)
+  - ML/C string conversion routines
+
+  This is the (only) library to be used by user code.
+
+Library $c/c-int.cm (subdirectory "internals"):
+
+  - implements all of $c/c.cm
+  - implements low-level hooks to be used by ml-nlffigen-generated code
+
+Library $c/memory.cm (subdirectory "memory"):
+
+  - encapsulates low-level details related to raw memory access
+
+  User code should NOT directly refer to this library.
+```
+
+Similar FFIs are also available in [Poly/ML](https://www.polyml.org/documentation/Reference/Foreign.xml) and [MLton](http://mlton.org/ForeignFunctionInterface). SML# [seems to have one too.](https://smlsharp.github.io/en/about/features/) So does [Moscow ML](https://mosml.org/). So does [MLkit](https://elsman.com/mlkit/). Very nice.
 
 > ...Personally I consider Concurrent ML to be a "killer" feature of SML/NJ. ...It’s a shame that CML is not built-in to SML/NJ instead of being an add-on.
 

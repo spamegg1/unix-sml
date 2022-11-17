@@ -1,8 +1,7 @@
 #include <ctype.h> // for isspace
 
 int
-word_count(const char* text)
-{
+word_count(const char* text) {
     int count = 0;
     char c;
 out:
@@ -13,13 +12,11 @@ out:
 
 in:
     c = *text++;
-    if (!c)
-    {
+    if (!c) {
         count++;
         goto eod;
     }
-    if (isspace(c))
-    {
+    if (isspace(c)) {
         count++;
         goto in;
     }
@@ -30,7 +27,6 @@ eod:
 }
 
 // just to make it compile.
-int main(int argc, char *argv[])
-{
+int main(int argc, char *argv[]) {
     return 0;
 }
