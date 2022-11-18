@@ -1323,7 +1323,11 @@ YAY! :confetti_ball: :tada: :partying_face: It also works in nested directories,
 
 ### POSIX API
 
-Lots and lots of stuff here! There are so many structures, types and functions it's dizzying: `Posix.FileSys, Posix.SysDB, Posix.ProcEnv`, and we are also using `SysWord, Date, Position, StringCvt`. We can change file permissions with `Posix.FileSys.chmod`. The [`Posix.FileSys` signature](https://smlfamily.github.io/Basis/posix-file-sys.html) has weird sub-structure names, like `S` or `O` or `ST`. 
+Lots and lots of stuff here! There are so many structures, types and functions it's dizzying: `Posix.FileSys, Posix.SysDB, Posix.ProcEnv`, and we are also using `SysWord, Date, Position, StringCvt`. 
+
+#### Posix.FileSys
+
+We can change file permissions with `Posix.FileSys.chmod`. The [`Posix.FileSys` signature](https://smlfamily.github.io/Basis/posix-file-sys.html) has weird sub-structure names, like `S` or `O` or `ST`. 
 
 There is code for a `stat` function that is a simplified version of the Unix `stat` utility. Again, missing code and functions are introduced later. I am seeing the use of `local` for the first time in `sml` here (here `FS` is `Posix.FileSys`):
 
@@ -1395,7 +1399,7 @@ val it = 0 : OS.Process.status
 
 :confetti_ball::tada: :partying_face: 
 
-#### POSIX.IO
+#### Posix.IO
 
 Now we get to the more monadic stuff.
 
@@ -1412,7 +1416,7 @@ Very sensible. If we make these changes, the code on page 102 type-checks.
 
 The top part on page 103 still does not work. This code is supposed to be directly taken from the `Unix` structure; the code must have changed a lot since then, since I could not find it in the source code or the documentation. The `openOutFD` and `openInFD` functions don't exist anymore; they were probably renamed to `openOut` and `openIn`.
 
-`TextIO.mkInstream` does not accept `NONE` as its second argument, though. The type-checker wants a `TextIO.StreamIO.vector` which, in this case, [is a `string`!](https://smlfamily.github.io/Basis/stream-io.html#SIG:STREAM_IO.vector:TY) The correct version is now
+`TextIO.StreamIO.mkInstream` does not accept `NONE` as its second argument, though. The type-checker wants a `TextIO.StreamIO.vector` which, in this case, [is a `string`!](https://smlfamily.github.io/Basis/stream-io.html#SIG:STREAM_IO.vector:TY) The correct version is now
 
 ```sml
 fun openInFD(name: string, fd: Posix.IO.file_desc): TextIO.instream =
@@ -1421,9 +1425,53 @@ fun openInFD(name: string, fd: Posix.IO.file_desc): TextIO.instream =
     )
 ```
 
+Next we see the code for [`Unix.executeInEnv`](https://smlfamily.github.io/Basis/unix.html#SIG:UNIX.executeInEnv:VAL). I'm guessing this is also too old and must have changed since 2001. It's quite long, 1.5 pages! A few typos again on page 104 (a parenthesis that gets opened after `startChild` but never gets closed). `Substring.all` needs to be changed to `Substring.full` again (happened before). 
 
+There is surprisingly little explanation for this long code. Again the structures that are used are explained in *later sections.* I have to figure out where `protect` is coming from in
+
+```sml
+fun startChild () =
+(
+    case protect P.fork() of
+        SOME pid => pid      (* parent *)
+```
+
+because the compiler cannot find it. `protect` does not exist anywhere in the documentation. It must have been removed or renamed to something else. `Posix.Process.fork()` already returns a `pid option` so I'm just gonna remove `protect` here.
+
+At the end of the code, in the returned value, there is a reference to `PROC`:
+
+```sml
+PROC {
+    pid = pid,
+    ins = ins,
+    outs = outs
+}
+```
+
+but I have no idea what it is. I thought it's a reference to an earlier alias `structure PROC = Posix.ProcEnv` but I cannot find anything [in that structure](https://smlfamily.github.io/Basis/posix-proc-env.html) that fits. `executeInEnv` is supposed to return a `('a, 'b) proc` type, which I don't know how to create. There were big overhauls to the `Unix` structure in 2004. Can't figure it out, moving on. *It's a mystery!* 
+
+#### Posix.Process, Posix.ProcEnv, Posix.SysDB
+
+These are used above in `Posix.FileSys` and `Posix.IO`, here only given a single paragraph.
+
+#### Posix.TTY
+
+The author uses shorthands without telling: `TTY` refers to `Posix.TTY`. The code example here gives a lot of `unbound variable` errors:
+
+```sml
+posix-tty.sml:7.16-7.27 Error: unbound variable or constructor: getattr in path TTY.getattr
+posix-tty.sml:15.18-15.31 Error: unbound variable or constructor: getospeed in path TTY.getospeed
+posix-tty.sml:14.18-14.31 Error: unbound variable or constructor: getispeed in path TTY.getispeed
+posix-tty.sml:18.5-18.16 Error: unbound variable or constructor: setattr in path TTY.setattr
+```
+
+Some of these functions are inside substructures of [`Posix.TTY`](https://smlfamily.github.io/Basis/posix-tty.html) named `TC` and `CF`. So the API must have changed. The author was aware of this back in 2001:
+
+> Note that at the time of writing this, the Basis library documentation for `Posix.TTY` doesn’t match SML/NJ version 110.0.7. In version 110.0.7 there is no internal structure called `Posix.TTY.CF`. Its contents appear directly in `Posix.TTY`. Similarly these functions which should be in the `Posix.TTY.TC` structure appear directly in `Posix.TTY: getattr, setattr, sendbreak, drain, flush`, and `flow`.
 
 ## Chapter 4: The SML/NJ Extensions
+
+So here we are finally! I'd like to know if it's possible to use these in Poly/ML or MLton. I'll give it a try at least on the `poly` REPL later.
 
 ### The Unsafe API
 
