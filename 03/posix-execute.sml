@@ -6,8 +6,42 @@ structure FS = Posix.FileSys
 structure PIO = Posix.IO
 structure PROC = Posix.ProcEnv
 
+(* 2005 version
+datatype 'a stream =
+    UNOPENED of PIO.file_desc
+|   OPENED of { stream: 'a, close: unit -> unit }
+
+datatype proc_status = DEAD of OS.Process.status | ALIVE of P.pid
+
+datatype ('a, 'b) proc = PROC of {
+    base: string,
+    instream: 'a stream ref,
+    outstream: 'b stream ref,
+    status: proc_status ref
+}
+*)
+
+(* version I invented, guessing the 2001 version. At least it type-checks! *)
+datatype ('a, 'b) proc = PROC of {
+    pid: P.pid,
+    ins: 'a,
+    outs: 'b
+}
+
+fun protect(f: 'a -> 'b)(x: 'a): 'b =
+let
+    val _ = Signals.maskSignals Signals.MASKALL
+    val y = (f x) handle ex => (
+        Signals.unmaskSignals Signals.MASKALL;
+        raise ex
+    )
+in
+    Signals.unmaskSignals Signals.MASKALL;
+    y
+end
+
 fun executeInEnv(cmd: string, argv: string list, env: string list)
-: ('a, 'b) Unix.proc =
+: (TextIO.instream, TextIO.outstream) proc =
 let
     val p1: {infd: PIO.file_desc, outfd: PIO.file_desc} = PIO.pipe()
     val p2: {infd: PIO.file_desc, outfd: PIO.file_desc} = PIO.pipe()
@@ -22,7 +56,7 @@ let
     val base: string = SS.string(SS.taker(fn c => c <> #"/") (SS.full cmd))
 
     fun startChild(): P.pid =
-        case P.fork() of
+        case protect P.fork() of
             SOME pid => pid (* parent *)
         |   NONE =>
             let
@@ -34,7 +68,8 @@ let
                 PIO.close (#outfd p1);
                 PIO.close (#infd p2);
 
-                if oldin = newin then ()            (* file_desc is an eqtype *)
+                (* file_desc is an eqtype but still gives polyEqual warning *)
+                if oldin = newin then ()
                 else (
                     PIO.dup2 { old = oldin, new = newin };
                     PIO.close oldin
@@ -63,7 +98,6 @@ in
     PIO.setfd(#infd  p2, PIO.FD.flags [PIO.FD.cloexec]);
     PIO.setfd(#outfd p1, PIO.FD.flags [PIO.FD.cloexec]);
 
-    (* this one does not work. I don't know how to make it work. *)
     PROC {
         pid = pid,
         ins = ins,

@@ -1450,6 +1450,56 @@ PROC {
 
 but I have no idea what it is. I thought it's a reference to an earlier alias `structure PROC = Posix.ProcEnv` but I cannot find anything [in that structure](https://smlfamily.github.io/Basis/posix-proc-env.html) that fits. `executeInEnv` is supposed to return a `('a, 'b) proc` type, which I don't know how to create. There were big overhauls to the `Unix` structure in 2004. Can't figure it out, moving on. *It's a mystery!* 
 
+**EDIT:** Finally found the source code the book is talking about. It's inside [`system.tgz`](http://smlnj.cs.uchicago.edu/dist/working/110.57/system.tgz) source file, under `system/Basis/Implementation/Unix/unix.sml`. Looks very similar to the code in the book. The functions were renamed to `openTextOutFD, openBinOutFD, openTextInFD, openBinInFD` and I was right about the second argument being `""`. 
+
+The mystery of the `protect`function is also solved: it's defined there, not part of the library. 
+
+```sml
+fun protect(f: 'a -> 'b)(x: 'a): 'b = 
+let
+    val _ = Signals.maskSignals Signals.MASKALL
+    val y = (f x) handle ex => (
+        Signals.unmaskSignals Signals.MASKALL; 
+        raise ex
+    )
+in
+    Signals.unmaskSignals Signals.MASKALL; y
+end
+```
+
+The `PROC` mystery is also solved. It's a custom datatype constructor defined in that file, with a bunch of mutable references in it: 
+
+```sml
+datatype 'stream stream =
+    UNOPENED of PIO.file_desc
+|   OPENED of { stream: 'stream, close: unit -> unit }
+
+datatype proc_status = DEAD of OS.Process.status | ALIVE of P.pid
+
+datatype ('instream, 'outstream) proc = PROC of { 
+    base: string,
+    instream: 'instream stream ref,
+    outstream: 'outstream stream ref,
+    status: proc_status ref 
+}
+```
+
+This is the 2005 version, the earliest I could find. So it was after the major 2004 overhaul of the `Unix` structure. Here `PROC` has more arguments than the book version. Versions before 2005 don't have the source code available, they are not posted on the [old releases](https://www.smlnj.org/old-news.html).
+
+*I really wish the book explained it better.* At least say: "this is only part of the source code. with lots of stuff missing." I hate unrunnable code examples. I guess I am expected to look into the source code, while the snippets in the book only show little bits of it.
+
+I invented my own solution:
+
+```sml
+datatype ('a, 'b) proc = PROC of {
+    pid: P.pid,
+    ins: 'a,
+    outs: 'b
+}
+```
+
+It type-checks with the code *as presented in the book*, but still getting `polyEqual` warnings even though `Posix.IO.file_desc` is supposed to be an `eqtype`. Anyway, good enough! Time to move on.
+
 #### Posix.Process, Posix.ProcEnv, Posix.SysDB
 
 These are used above in `Posix.FileSys` and `Posix.IO`, here only given a single paragraph.
@@ -1468,6 +1518,8 @@ posix-tty.sml:18.5-18.16 Error: unbound variable or constructor: setattr in path
 Some of these functions are inside substructures of [`Posix.TTY`](https://smlfamily.github.io/Basis/posix-tty.html) named `TC` and `CF`. So the API must have changed. The author was aware of this back in 2001:
 
 > Note that at the time of writing this, the Basis library documentation for `Posix.TTY` doesn’t match SML/NJ version 110.0.7. In version 110.0.7 there is no internal structure called `Posix.TTY.CF`. Its contents appear directly in `Posix.TTY`. Similarly these functions which should be in the `Posix.TTY.TC` structure appear directly in `Posix.TTY: getattr, setattr, sendbreak, drain, flush`, and `flow`.
+
+Making the necessary changes makes the code type-check.
 
 ## Chapter 4: The SML/NJ Extensions
 
