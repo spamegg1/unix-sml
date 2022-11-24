@@ -26,7 +26,7 @@ sudo apt install ml-yacc ml-lex ml-lpt libckit-smlnj libcml-smlnj libcmlutil-sml
 As a shortcut to install all available `smlnj` packages, you can use:
 
 ```bash
-sudo apt install smlnj* *smlnj
+sudo apt install smlnj* *smlnj ml-*
 ```
 
 ### The REPL
@@ -303,6 +303,8 @@ but I had to use:
 > ./hw
 Hello world
 ```
+
+Turns out it's also possible to use [`heap2exec`](https://www.smlnj.org/doc/heap2exec/index.html) to create a binary executable. I'll give this a try. Apparently it's not included in the default installation, unless I install from source and change `config/targets`.
 
 ### The `echo` program
 
@@ -1523,25 +1525,222 @@ Making the necessary changes makes the code type-check.
 
 ## Chapter 4: The SML/NJ Extensions
 
-So here we are finally! I'd like to know if it's possible to use these in Poly/ML or MLton. I'll give it a try at least on the `poly` REPL later.
+So here we are finally! I'd like to know if it's possible to use these in Poly/ML or MLton. I'm guessing not. I'll give it a try at least on the `poly` REPL later.
 
 ### The Unsafe API
 
+This is found under ["Special features of SML/NJ"](https://www.smlnj.org/doc/SMLofNJ/pages/unsafe.html) which is separate from both the [Basis Library](https://smlfamily.github.io/Basis/manpages.html) and the [`smlnj-lib` man pages](https://www.smlnj.org/doc/smlnj-lib/index.html). Weird.
+
+There are the types `Unsafe.CharVector`, `Unsafe.Word8Vector`, `Unsafe.CharArray`, `Unsafe.Word8Array`, `Unsafe.Real64Array` which are faster.
+
+#### Memory Representation
+
+The author laments that the library lacks functionality to manipulate memory representation of data. Then there is a 2 page long code example to estimate the size of objects in memory using `Unsafe.Object`. The [doc page for the Object structure](https://www.smlnj.org/doc/SMLofNJ/pages/object.html) is well-hidden and not linked to by other pages, I had to guess the URL. Here we can see all the things the author is using. Most importantly:
+
+```sml
+datatype representation
+  = Unboxed
+  | Real
+  | Pair
+  | Record
+  | PolyArray
+  | ByteVector
+  | ByteArray
+  | RealArray
+  | Susp
+  | WeakPtr
+```
+
+So `Susp` and `WeakPtr` have size 2. According to the book, a record, pair, or real-array has to be converted to a vector with `toTuple`, then folded over with `Vector.foldl`. The documentation seems to agree:
+
+> `toTuple ob`
+>
+> If ob is a record, tuple, vector, or real-array, get a vector of its fields
+
+But the REPL disagrees:
+
+```sml
+smlnj-memory-rep.sml:22.36-22.74 Error: operator and operand don't agree [tycon mismatch]
+  operator domain: ?.Unsafe.object vector
+  operand:         ?.Unsafe.object list
+  in expression:
+    ((Vector.foldl foldFun) 1) (O.toTuple obj)
+```
+
+So the API must have changed, and the documentation was not updated (I guess). It's a `list` not a `vector`. We need to use `List.foldl` instead. Then everything is fine.
+
+Due to the author's style of nesting functions inside functions inside functions, these are repeated twice:
+
+```sml
+fun sz obj = if O.boxed obj	then 1 + (obj_size obj)	else 1
+val f = (fn (obj, s) => s + (sz obj))
+```
+
+Is there some other reason? I factored them out. Anyway, there is unavoidable mutual recursion here with the `and` keyword. I was able to move all the functions out of the nests. It works!
+
+```sml
+- main("", []);
+Size of integer = 1 32-bit words
+Size of real = 3 32-bit words
+Size of string = 2 32-bit words
+Size of pair = 5 32-bit words
+Size of record = 9 32-bit words
+val it = 0 : OS.Process.status
+```
+
+#### The C Interface, and Miscellaneous Unsafe Operations
+
+Not much to say [here](https://www.smlnj.org/doc/SMLofNJ/pages/cinterface.html).
+
 ### Signals
+
+The author shows us how to print all the available signals on our systems. There is a basic example of an interrupt handler. We get our first glimpse into [Continuations](https://www.smlnj.org/doc/SMLofNJ/pages/cont.html), which I know nothing about but heard of quite a bit.
+
+Wow! I found a compiler bug! :rofl: It's like winning the jackpot.
+
+```sml
+Error: Compiler bug: Unify: unifyTy: arg ty lists wrong length
+
+uncaught exception Error
+  raised at: ../compiler/Basics/errormsg/errormsg.sml:52.14-52.19
+             ../compiler/Elaborator/types/unify.sml:310.13
+             ../compiler/Elaborator/types/unify.sml:310.13
+             ../compiler/Elaborator/types/unify.sml:310.13
+             ../compiler/Elaborator/types/unify.sml:310.13
+             ../compiler/Elaborator/types/typecheck.sml:625.12
+             ../compiler/Basics/stats/stats.sml:198.40
+             ../compiler/Elaborator/elaborate/elabmod.sml:1741.65
+             ../compiler/Elaborator/elaborate/elabmod.sml:1745.59
+             ../compiler/Basics/stats/stats.sml:198.40
+             ../compiler/TopLevel/interact/evalloop.sml:44.55
+             ../compiler/TopLevel/interact/evalloop.sml:292.17-292.20
+```
+
+[Reported!](https://github.com/smlnj/legacy/issues/262) I'm having fun!
 
 ### The SMLofNJ API
 
+These are the "special features" listed [here](https://www.smlnj.org/doc/features.html). Now personally I know nothing about all these low-level specialized execution options; I'm a fairly high-level programmer, I'm not very good at the low-level stuff.
+
+#### Call/cc
+
+It's [here](https://www.smlnj.org/doc/SMLofNJ/pages/cont.html). Later explained in Chapter 6, Concurrency.
+
+#### The Interval Timer
+
+The author gives a code example of this [crazy feature](https://www.smlnj.org/doc/SMLofNJ/pages/interval-timer.html):
+
+> By returning a different continuation you can have your program switch to different code on each clock tick.
+
+What kind of insane person would want to do that?
+
+#### Garbage Collection Control
+
+It's [here](https://www.smlnj.org/doc/SMLofNJ/pages/gc.html#GC:SIG:SPEC). We can manually trigger GC, and turn on/off GC messages. Nice.
+
+#### Execution Time Profiling
+
+It's supposed to be [here](https://www.smlnj.org/doc/Compiler/pages/profile.html) but the link is dead. The book says:
+>You access execution time profiling through the `Compiler.Profile` structure, which is separate from the `SMLofNJ` structure.
+
+There is [this](https://www.smlnj.org/doc/SMLofNJ/pages/prof-control.html#PROF_CONTROL:SIG:SPEC) which the book also explains:
+
+> However the profiling uses the low-level control functions in `SMLofNJ.Internals.ProfControl`.
+
+The documentation agrees:
+
+> The [ProfControl](https://www.smlnj.org/doc/SMLofNJ/pages/internals.html#SIG:INTERNALS.ProfControl:STR:SPEC) structure is for internal use by the compiler. Programmers who want execution profiles of their programs should use the [Compiler.Profile](http://cm.bell-labs.com/cm/cs/what/smlnj/doc/Compiler/pages/compiler.html#SIG:VISCOMP.Profile:STR:SPEC) structure.  
+
+That Bell Labs link is also dead. I found one old [link](https://flint.cs.yale.edu/cs430/smlnj/doc/Compiler/pages/profile.html).
+
+The book says to use
+
+```sml
+> CM_ROOT=profile.cm sml
+Standard ML of New Jersey, Version 110.0.7, September 28, 2000
+- Compiler.Profile.setProfMode true;
+- CM.make();
+```
+
+but that doesn't work. The `Compiler.Profile` structure does not exist as far as I can tell. As such, the code example in the book does not work either. 
+
+It's possible that getting access to `Compiler.Profile` requires some special thing, like compiling from source with certain options, or something. The default Ubuntu installation does not have it, if this is the case.
+
+Another possibility is that the structures were moved or renamed. For example, the [old link](https://flint.cs.yale.edu/cs430/smlnj/doc/Compiler/pages/) shows that all the structures like `Profile, PrettyPrint, Control.Print, Control.MC` *used to be* `Compiler.Profile, Compiler.PrettyPrint, Compiler.Control.Print, Compiler.Control.MC` but they were changed.
+
+So I'm not sure if `Compiler.Profile` was entirely removed, or renamed to something else that I cannot find.
+
+#### Operating System Information
+
+It's [here](https://www.smlnj.org/doc/SMLofNJ/pages/sysinfo.html).
+
+#### Lazy Suspensions
+
+It's [here](https://www.smlnj.org/doc/SMLofNJ/pages/susp.html).
+
+#### Weak Pointers
+
+It's [here](https://www.smlnj.org/doc/SMLofNJ/pages/weak.html).
+
+#### The Exception History List
+
+All you need to know is the function `SMLofNJ.exnHistory`.
+
 ### The Socket API
+
+#### The Generic Socket Types
+
+#### The Specific Socket Types
+
+#### Socket Addresses
+
+#### A Simple TCP Client
+
+#### A Simple TCP Server
+
+#### Servers with Multiple Connections
 
 ## Chapter 5: The Utility Libraries
 
 ### Data Structures
 
+#### Trees, Maps and Sets
+
+#### Hash Tables
+
+#### Vectors and Arrays
+
+#### Queues and Fifos
+
+#### Property Lists
+
 ### Algorithms
+
+#### Sorting and Searching
+
+#### Formatted Strings
+
+#### Misc. Utilities
 
 ### Regular Expressions
 
+#### The Pieces of the Library
+
+#### Basic Matching
+
+#### Matching with a Back-End
+
 ### Other Utilities
+
+#### Parsing HTML
+
+#### INet
+
+#### Pretty-Printing
+
+#### Reactive
+
+#### Unix
 
 ## Chapter 6: Concurrency
 
@@ -1550,6 +1749,16 @@ So here we are finally! I'd like to know if it's possible to use these in Poly/M
 ### Coroutines
 
 ### The Concurrent ML Model
+
+#### CML Threads
+
+#### CML Channels
+
+#### CML Events
+
+#### Synchronous Variables
+
+#### Mailboxes
 
 ### A Counter Object
 
@@ -1583,7 +1792,7 @@ So here we are finally! I'd like to know if it's possible to use these in Poly/M
 
 #### Basic SML/NJ Performance
 
-### Memory Performance
+#### Memory Performance
 
 #### CML Channel Communication and Scheduling
 
