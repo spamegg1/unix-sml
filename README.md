@@ -1670,6 +1670,8 @@ Another possibility is that the structures were moved or renamed. For example, t
 
 So I'm not sure if `Compiler.Profile` was entirely removed, or renamed to something else that I cannot find.
 
+*Mystery solved:* It definitely is about the installation. I have to compile from source, and enable the auto-loading of "the Visible Compiler (old style)". This is in the `config/preloads` file in the [installation archive](https://smlnj.org/dist/working/110.99.3/config.tgz).
+
 #### Operating System Information
 
 It's [here](https://www.smlnj.org/doc/SMLofNJ/pages/sysinfo.html).
